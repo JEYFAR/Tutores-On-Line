@@ -1,0 +1,96 @@
+/* =============================================================================
+   TutoresOnLine - Estilos Personalizados
+   Complemento limpio y moderno para Bootstrap 5
+   ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --app-primary: #2563eb;
+    --app-primary-hover: #1d4ed8;
+    --app-secondary: #0f172a;
+    --app-bg: #f8fafc;
+    --app-card-border: #e2e8f0;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--app-bg);
+    color: #1e293b;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+/* Barra de navegación */
+.navbar-custom {
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--app-card-border);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+.navbar-brand-custom {
+    font-weight: 700;
+    color: var(--app-primary) !important;
+    letter-spacing: -0.5px;
+}
+
+/* Tarjetas y Contenedores */
+.card-custom {
+    border: 1px solid var(--app-card-border);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    background: #ffffff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-custom:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+}
+
+/* Estrellas de Calificación */
+.estrellas-calificacion {
+    color: #f59e0b;
+    font-size: 1.1rem;
+}
+
+/* Badges */
+.badge-rol {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.35rem 0.65rem;
+    border-radius: 20px;
+}
+
+/* Botones */
+.btn-primary-custom {
+    background-color: var(--app-primary);
+    border-color: var(--app-primary);
+    color: #ffffff;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.55rem 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.btn-primary-custom:hover {
+    background-color: var(--app-primary-hover);
+    border-color: var(--app-primary-hover);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+/* Pie de página */
+.footer-custom {
+    background-color: #ffffff;
+    border-top: 1px solid var(--app-card-border);
+    padding: 1.75rem 0;
+    color: #64748b;
+    font-size: 0.9rem;
+}

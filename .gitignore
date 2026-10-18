@@ -1,0 +1,23 @@
+# Documento del plan
+PLAN.md
+
+# Archivos de entorno y credenciales
+config/.env
+.env
+
+# Archivos subidos por los usuarios
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/.htaccess
+
+# Archivos de logs
+logs/*
+!logs/.gitkeep
+!logs/.htaccess
+*.log
+
+# Archivos del sistema y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
