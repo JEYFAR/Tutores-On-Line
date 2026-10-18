@@ -17,13 +17,10 @@ if (usuario_autenticado()) {
     exit;
 }
 
-// Verificar si las credenciales están configuradas en .env
+// Si no están configuradas las credenciales, registrar en log interno y mostrar mensaje limpio al usuario
 if (!google_oauth_configurado()) {
-    $uri_callback = APP_URL . '/oauth_callback.php';
-    set_flash(
-        'warning',
-        "Para iniciar sesión con Google en local, debes configurar GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en config/.env con la URI de redirección: {$uri_callback}"
-    );
+    error_log("[Google OAuth]: Falta configurar GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en config/.env. Callback esperado: " . APP_URL . "/oauth_callback.php");
+    set_flash('info', 'El acceso con Google no está disponible temporalmente. Por favor ingresa con tu correo y contraseña.');
     header('Location: ' . APP_URL . '/login.php');
     exit;
 }

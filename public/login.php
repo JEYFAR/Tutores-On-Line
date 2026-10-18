@@ -154,13 +154,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
             <div class="text-center small">
                 ¿Aún no tienes una cuenta? <a href="<?= APP_URL ?>/registro.php" class="fw-semibold text-decoration-none">Regístrate aquí</a>
             </div>
-
-            <!-- Accesos rápidos para pruebas locales -->
-            <div class="mt-4 p-3 bg-light rounded-3 border small">
-                <div class="fw-semibold text-muted mb-1"><i class="bi bi-info-circle me-1"></i> Cuentas de prueba (Password: <code>password123</code>):</div>
-                <div class="text-secondary">&bull; Estudiante: <code>carlos.estudiante@ejemplo.com</code></div>
-                <div class="text-secondary">&bull; Tutor: <code>roberto.tutor@ejemplo.com</code></div>
-            </div>
         </div>
     </div>
 </div>
