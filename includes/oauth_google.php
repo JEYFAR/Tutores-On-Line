@@ -59,7 +59,8 @@ function obtener_url_autorizacion_google($rol_deseado = 'estudiante')
 }
 
 /**
- * Ejecuta una petición HTTP con cURL gestionando certificados SSL para entornos locales
+ * Ejecuta una petición HTTP a las APIs de Google.
+ * Utiliza cURL si está disponible; si no, utiliza stream_context_create nativo de PHP.
  *
  * @param string $url
  * @param string $metodo 'GET' o 'POST'
@@ -67,44 +68,99 @@ function obtener_url_autorizacion_google($rol_deseado = 'estudiante')
  * @param array $cabeceras
  * @return array ['exito' => bool, 'datos' => array|null, 'error' => string|null]
  */
-function ejecutar_curl_oauth($url, $metodo = 'GET', $datos = [], $cabeceras = [])
+function ejecutar_peticion_oauth($url, $metodo = 'GET', $datos = [], $cabeceras = [])
 {
-    $ch = curl_init();
+    // MÉTODO 1: Usar cURL si la extensión está activa en Apache
+    if (function_exists('curl_init')) {
+        $ch = curl_init();
 
-    $opciones = [
-        CURLOPT_URL            => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 15,
-        CURLOPT_FOLLOWLOCATION => true,
+        $opciones = [
+            CURLOPT_URL            => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 15,
+            CURLOPT_FOLLOWLOCATION => true,
+        ];
+
+        if (env('APP_ENV', 'local') === 'local') {
+            $opciones[CURLOPT_SSL_VERIFYPEER] = false;
+            $opciones[CURLOPT_SSL_VERIFYHOST] = false;
+        } else {
+            $opciones[CURLOPT_SSL_VERIFYPEER] = true;
+            $opciones[CURLOPT_SSL_VERIFYHOST] = 2;
+        }
+
+        if ($metodo === 'POST') {
+            $opciones[CURLOPT_POST] = true;
+            $opciones[CURLOPT_POSTFIELDS] = http_build_query($datos);
+        }
+
+        if (!empty($cabeceras)) {
+            $opciones[CURLOPT_HTTPHEADER] = $cabeceras;
+        }
+
+        curl_setopt_array($ch, $opciones);
+
+        $respuesta = curl_exec($ch);
+        $error = curl_error($ch);
+        $codigo_http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($respuesta === false || !empty($error)) {
+            return ['exito' => false, 'error' => "Error cURL: {$error}"];
+        }
+
+        $json = json_decode($respuesta, true);
+
+        if ($codigo_http < 200 || $codigo_http >= 300) {
+            $msg = $json['error_description'] ?? $json['error'] ?? "HTTP {$codigo_http}";
+            return ['exito' => false, 'error' => $msg];
+        }
+
+        return ['exito' => true, 'datos' => $json];
+    }
+
+    // MÉTODO 2 (FALLBACK NATIVO): Usar streams de PHP nativos (sin extensiones externas)
+    $headers_arr = [];
+    if (!empty($cabeceras)) {
+        foreach ($cabeceras as $h) {
+            $headers_arr[] = $h;
+        }
+    }
+
+    $http_options = [
+        'method'        => $metodo,
+        'ignore_errors' => true,
+        'timeout'       => 15,
     ];
 
-    // En desarrollo local (USBWebserver), omitir verificación peer si falta cacert.pem
-    if (env('APP_ENV', 'local') === 'local') {
-        $opciones[CURLOPT_SSL_VERIFYPEER] = false;
-        $opciones[CURLOPT_SSL_VERIFYHOST] = false;
-    } else {
-        $opciones[CURLOPT_SSL_VERIFYPEER] = true;
-        $opciones[CURLOPT_SSL_VERIFYHOST] = 2;
-    }
-
     if ($metodo === 'POST') {
-        $opciones[CURLOPT_POST] = true;
-        $opciones[CURLOPT_POSTFIELDS] = http_build_query($datos);
+        $body = http_build_query($datos);
+        $headers_arr[] = 'Content-Type: application/x-www-form-urlencoded';
+        $headers_arr[] = 'Content-Length: ' . strlen($body);
+        $http_options['content'] = $body;
     }
 
-    if (!empty($cabeceras)) {
-        $opciones[CURLOPT_HTTPHEADER] = $cabeceras;
+    $http_options['header'] = implode("\r\n", $headers_arr);
+
+    $ssl_options = [
+        'verify_peer'      => false,
+        'verify_peer_name' => false,
+    ];
+
+    $ctx = stream_context_create([
+        'http' => $http_options,
+        'ssl'  => $ssl_options,
+    ]);
+
+    $respuesta = @file_get_contents($url, false, $ctx);
+    if ($respuesta === false) {
+        $err = error_get_last()['message'] ?? 'Error de conexión HTTP';
+        return ['exito' => false, 'error' => $err];
     }
 
-    curl_setopt_array($ch, $opciones);
-
-    $respuesta = curl_exec($ch);
-    $error = curl_error($ch);
-    $codigo_http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($respuesta === false || !empty($error)) {
-        return ['exito' => false, 'error' => "Error cURL: {$error}"];
+    $codigo_http = 200;
+    if (isset($http_response_header[0]) && preg_match('#HTTP/\S+\s+(\d+)#', $http_response_header[0], $matches)) {
+        $codigo_http = (int)$matches[1];
     }
 
     $json = json_decode($respuesta, true);
@@ -133,7 +189,7 @@ function intercambiar_codigo_por_token($code)
         'grant_type'    => 'authorization_code'
     ];
 
-    return ejecutar_curl_oauth(GOOGLE_TOKEN_URL, 'POST', $datos_post);
+    return ejecutar_peticion_oauth(GOOGLE_TOKEN_URL, 'POST', $datos_post);
 }
 
 /**
@@ -149,7 +205,7 @@ function obtener_perfil_google($access_token)
         "Accept: application/json"
     ];
 
-    $resp = ejecutar_curl_oauth(GOOGLE_USERINFO_URL, 'GET', [], $cabeceras);
+    $resp = ejecutar_peticion_oauth(GOOGLE_USERINFO_URL, 'GET', [], $cabeceras);
     if (!$resp['exito']) {
         return ['exito' => false, 'error' => $resp['error']];
     }
