@@ -9,10 +9,9 @@
 
 require_once dirname(__DIR__) . '/includes/auth.php';
 
-// Si ya tiene sesión activa, redirigir a su panel correspondiente
+// Si ya tiene sesión activa, redirigir al panel universal
 if (usuario_autenticado()) {
-    $destino = ($_SESSION['rol'] === 'tutor') ? '/panel_tutor.php' : '/panel_estudiante.php';
-    header('Location: ' . APP_URL . $destino);
+    header('Location: ' . APP_URL . '/panel.php');
     exit;
 }
 
@@ -64,8 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     set_flash('success', '¡Hola de nuevo, ' . $usuario['nombre'] . '!');
 
-                    $destino = ($usuario['rol'] === 'tutor') ? '/panel_tutor.php' : '/panel_estudiante.php';
-                    header('Location: ' . APP_URL . $destino);
+                    header('Location: ' . APP_URL . '/panel.php');
                     exit;
                 } else {
                     // Registrar intento fallido

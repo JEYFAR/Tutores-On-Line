@@ -66,20 +66,25 @@ $perfil = $resp_perfil['perfil'];
 $rol_deseado = $_SESSION['oauth_rol'] ?? 'estudiante';
 unset($_SESSION['oauth_rol']);
 
-// 5. Autenticar o crear el usuario en la base de datos
-$usuario = autenticar_o_crear_usuario_google($perfil, $rol_deseado);
+// 5. Verificar si el usuario ya existe o es su primer ingreso
+$resultado = autenticar_o_buscar_usuario_google($perfil);
 
-if (!$usuario) {
-    set_flash('danger', 'Ocurrió un error al vincular tu cuenta de Google en la base de datos.');
-    header('Location: ' . APP_URL . '/login.php');
+if ($resultado['existe']) {
+    // Usuario YA registrado: iniciar sesión formal directo al panel universal
+    crear_sesion_usuario($resultado['usuario']);
+    set_flash('success', '¡Bienvenido de nuevo, ' . $resultado['usuario']['nombre'] . '!');
+    header('Location: ' . APP_URL . '/panel.php');
+    exit;
+} else {
+    // Usuario NUEVO: Guardar datos de Google temporalmente en sesión y enviarlo al registro para que elija su rol y ciudad
+    $_SESSION['google_registro'] = [
+        'id'     => $perfil['sub'] ?? '',
+        'nombre' => $perfil['name'] ?? 'Usuario',
+        'correo' => $perfil['email'] ?? '',
+        'foto'   => $perfil['picture'] ?? null
+    ];
+
+    set_flash('info', '¡Autenticado con Google! Por favor selecciona tu rol y ciudad para completar tu perfil.');
+    header('Location: ' . APP_URL . '/registro.php?origen=google');
     exit;
 }
-
-// 6. Iniciar formalmente la sesión protegida en el sistema
-crear_sesion_usuario($usuario);
-
-set_flash('success', '¡Bienvenido, ' . $usuario['nombre'] . '! Has iniciado sesión con tu cuenta de Google.');
-
-$destino = ($usuario['rol'] === 'tutor') ? '/panel_tutor.php' : '/panel_estudiante.php';
-header('Location: ' . APP_URL . $destino);
-exit;

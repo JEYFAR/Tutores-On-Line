@@ -6,6 +6,14 @@
  */
 
 $titulo_pagina = 'Inicio';
+require_once dirname(__DIR__) . '/includes/auth.php';
+
+// Si ya inició sesión, redirigir directo al dashboard
+if (usuario_autenticado()) {
+    header('Location: ' . APP_URL . '/panel.php');
+    exit;
+}
+
 require_once dirname(__DIR__) . '/includes/header.php';
 ?>
 

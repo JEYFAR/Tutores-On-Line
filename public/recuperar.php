@@ -10,6 +10,9 @@
 require_once dirname(__DIR__) . '/includes/auth.php';
 require_once dirname(__DIR__) . '/includes/correo.php';
 
+// Si ya tiene sesión activa, redirigir directo al dashboard
+requiere_invitado();
+
 $token_plano = trim($_GET['token'] ?? $_POST['token'] ?? '');
 $errores = [];
 $modo_cambio = false;

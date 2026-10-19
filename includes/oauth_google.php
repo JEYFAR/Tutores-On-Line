@@ -214,36 +214,36 @@ function obtener_perfil_google($access_token)
 }
 
 /**
- * Busca o registra al usuario en la base de datos a partir de su ID de Google
+ * Busca si el usuario de Google ya existe en cuentas_oauth o en usuarios por su correo.
+ * Si no existe, retorna existe = false para permitir completar el registro (rol, ciudad).
  *
  * @param array $perfil Datos de Google (sub, email, name, picture, email_verified)
- * @param string $rol_deseado
- * @return array|false Datos del usuario en la tabla usuarios o false si falla
+ * @return array ['existe' => bool, 'usuario' => array|null, 'perfil' => array]
  */
-function autenticar_o_crear_usuario_google($perfil, $rol_deseado = 'estudiante')
+function autenticar_o_buscar_usuario_google($perfil)
 {
     $google_id = $perfil['sub'] ?? '';
     $email     = trim($perfil['email'] ?? '');
-    $nombre    = trim($perfil['name'] ?? 'Usuario Google');
-    $foto      = $perfil['picture'] ?? null;
 
     if (empty($google_id) || empty($email)) {
-        return false;
+        return ['existe' => false, 'usuario' => null, 'perfil' => $perfil];
     }
 
     try {
         $pdo = obtener_conexion();
 
-        // 1. Verificar si ya existe una vinculación en cuentas_oauth
+        // 1. Verificar si ya existe vinculación en cuentas_oauth
         $stmt_oauth = $pdo->prepare("SELECT `usuario_id` FROM `cuentas_oauth` WHERE `proveedor` = 'google' AND `proveedor_user_id` = ? LIMIT 1");
         $stmt_oauth->execute([$google_id]);
         $vinculo = $stmt_oauth->fetch();
 
         if ($vinculo) {
-            // Usuario ya vinculado: obtener datos completos
             $stmt_u = $pdo->prepare("SELECT * FROM `usuarios` WHERE `id` = ? LIMIT 1");
             $stmt_u->execute([$vinculo['usuario_id']]);
-            return $stmt_u->fetch() ?: false;
+            $usuario = $stmt_u->fetch();
+            if ($usuario) {
+                return ['existe' => true, 'usuario' => $usuario, 'perfil' => $perfil];
+            }
         }
 
         // 2. Si no hay vínculo por Google ID, buscar si ya existe una cuenta con ese correo
@@ -264,19 +264,42 @@ function autenticar_o_crear_usuario_google($perfil, $rol_deseado = 'estudiante')
                 $usuario_existente['correo_verificado'] = 1;
             }
 
-            return $usuario_existente;
+            return ['existe' => true, 'usuario' => $usuario_existente, 'perfil' => $perfil];
         }
 
-        // 3. Crear nuevo usuario en el sistema
+        // 3. Es un usuario NUEVO: no existe ni por Google ID ni por correo
+        return ['existe' => false, 'usuario' => null, 'perfil' => $perfil];
+
+    } catch (Exception $e) {
+        error_log("[OAuth Google Sync Error]: " . $e->getMessage());
+        return ['existe' => false, 'usuario' => null, 'perfil' => $perfil];
+    }
+}
+
+/**
+ * Registra formalmente a un nuevo usuario proveniente de Google tras completar su formulario
+ *
+ * @param string $google_id
+ * @param string $nombre
+ * @param string $correo
+ * @param string $rol 'estudiante' o 'tutor'
+ * @param string $ciudad
+ * @param string|null $foto
+ * @return array|false
+ */
+function registrar_usuario_oauth_google($google_id, $nombre, $correo, $rol, $ciudad, $foto = null)
+{
+    try {
+        $pdo = obtener_conexion();
         $pdo->beginTransaction();
 
-        $rol = in_array($rol_deseado, ['estudiante', 'tutor'], true) ? $rol_deseado : 'estudiante';
+        $rol = in_array($rol, ['estudiante', 'tutor'], true) ? $rol : 'estudiante';
 
         $stmt_ins = $pdo->prepare(
             "INSERT INTO `usuarios` (`nombre`, `correo`, `password_hash`, `rol`, `ciudad`, `foto`, `correo_verificado`, `creado_en`)
-             VALUES (?, ?, NULL, ?, NULL, ?, 1, NOW())"
+             VALUES (?, ?, NULL, ?, ?, ?, 1, NOW())"
         );
-        $stmt_ins->execute([$nombre, $email, $rol, $foto]);
+        $stmt_ins->execute([$nombre, $correo, $rol, $ciudad, $foto]);
         $nuevo_id = (int)$pdo->lastInsertId();
 
         // Vincular en cuentas_oauth
@@ -296,7 +319,7 @@ function autenticar_o_crear_usuario_google($perfil, $rol_deseado = 'estudiante')
         if (isset($pdo) && $pdo->inTransaction()) {
             $pdo->rollBack();
         }
-        error_log("[OAuth Google Sync Error]: " . $e->getMessage());
+        error_log("[OAuth Google Register Error]: " . $e->getMessage());
         return false;
     }
 }

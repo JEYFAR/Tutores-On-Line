@@ -67,6 +67,14 @@ function requiere_login()
     }
 }
 
+function requiere_invitado()
+{
+    if (usuario_autenticado()) {
+        header('Location: ' . APP_URL . '/panel.php');
+        exit;
+    }
+}
+
 /**
  * Bloquea la página si el usuario no tiene el rol especificado
  *
@@ -80,12 +88,11 @@ function requiere_rol($roles_permitidos)
     $rol_actual = $_SESSION['rol'] ?? '';
 
     if (!in_array($rol_actual, $roles, true)) {
-        set_flash('danger', 'No tienes permisos para acceder a este recurso.');
-        if ($rol_actual === 'tutor') {
-            header('Location: ' . APP_URL . '/panel_tutor.php');
-        } else {
-            header('Location: ' . APP_URL . '/panel_estudiante.php');
-        }
+        $mensaje = ($rol_actual === 'estudiante')
+            ? 'Acceso denegado: Esta sección está reservada exclusivamente para profesores tutores.'
+            : 'Acceso denegado: Esta sección está reservada exclusivamente para estudiantes.';
+        set_flash('danger', $mensaje);
+        header('Location: ' . APP_URL . '/panel.php');
         exit;
     }
 }

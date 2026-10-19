@@ -89,18 +89,12 @@ $rol_usuario = $_SESSION['rol'] ?? '';
                             <li>
                                 <h6 class="dropdown-header">Mi Cuenta (<?= ucfirst(e($rol_usuario)) ?>)</h6>
                             </li>
-                            <?php if ($rol_usuario === 'estudiante'): ?>
-                                <li>
-                                    <a class="dropdown-item" href="<?= APP_URL ?>/panel_estudiante.php">
-                                        <i class="bi bi-speedometer2 me-2"></i> Mi Panel de Estudiante
-                                    </a>
-                                </li>
-                            <?php elseif ($rol_usuario === 'tutor'): ?>
-                                <li>
-                                    <a class="dropdown-item" href="<?= APP_URL ?>/panel_tutor.php">
-                                        <i class="bi bi-briefcase me-2"></i> Mi Panel de Tutor
-                                    </a>
-                                </li>
+                            <li>
+                                <a class="dropdown-item" href="<?= APP_URL ?>/panel.php">
+                                    <i class="bi bi-speedometer2 me-2"></i> Mi Panel
+                                </a>
+                            </li>
+                            <?php if ($rol_usuario === 'tutor'): ?>
                                 <li>
                                     <a class="dropdown-item" href="<?= APP_URL ?>/perfil_tutor.php?id=<?= (int)$_SESSION['usuario_id'] ?>">
                                         <i class="bi bi-person-badge me-2"></i> Ver Mi Perfil Público
