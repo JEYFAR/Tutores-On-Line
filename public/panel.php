@@ -188,7 +188,7 @@ require_once dirname(__DIR__) . '/includes/header.php';
                         <i class="bi bi-person-gear me-1"></i> Mi Perfil
                     </a>
                     <?php if ($rol === 'tutor'): ?>
-                        <a href="<?= APP_URL ?>/perfil_tutor.php?id=<?= $usuario_id ?>" class="btn btn-light text-success fw-semibold shadow-sm">
+                        <a href="<?= APP_URL ?>/perfil.php?id=<?= $usuario_id ?>" class="btn btn-light text-success fw-semibold shadow-sm">
                             <i class="bi bi-eye me-1"></i> Perfil Público
                         </a>
                     <?php else: ?>

@@ -108,7 +108,7 @@ $rol_usuario = $_SESSION['rol'] ?? '';
                             </li>
                             <?php if ($rol_usuario === 'tutor'): ?>
                                 <li>
-                                    <a class="dropdown-item" href="<?= APP_URL ?>/perfil_tutor.php?id=<?= (int)$_SESSION['usuario_id'] ?>">
+                                    <a class="dropdown-item" href="<?= APP_URL ?>/perfil.php?id=<?= (int)$_SESSION['usuario_id'] ?>">
                                         <i class="bi bi-person-badge me-2"></i> Ver Mi Perfil Público
                                     </a>
                                 </li>

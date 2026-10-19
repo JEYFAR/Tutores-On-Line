@@ -193,7 +193,7 @@ require_once dirname(__DIR__) . '/includes/header.php';
                 <?php endif; ?>
 
                 <div class="d-flex justify-content-between align-items-center">
-                    <a href="<?= APP_URL ?>/perfil_tutor.php?id=<?= (int)$tutor['id'] ?>" class="btn btn-outline-secondary">
+                    <a href="<?= APP_URL ?>/perfil.php?id=<?= (int)$tutor['id'] ?>" class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-left me-1"></i> Regresar
                     </a>
                     <button type="submit" class="btn btn-primary-custom px-4 py-2">

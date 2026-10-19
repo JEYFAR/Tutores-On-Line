@@ -77,7 +77,7 @@ try {
             'tarifa_max' => (float)$t['tarifa_max'],
             'calificacion' => (float)$t['calificacion'],
             'total_resenas' => (int)$t['total_calificaciones'],
-            'perfil_url' => APP_URL . '/perfil_tutor.php?id=' . $t['id']
+            'perfil_url' => APP_URL . '/perfil.php?id=' . $t['id']
         ];
     }
 

@@ -74,11 +74,9 @@ tutoresonline/
     ├── recuperar.php       # Restablecimiento de contraseña
     ├── logout.php          # Cierre de sesión y limpieza de cookies
     ├── buscar.php          # Buscador reactivo de tutores con Vue 3
-    ├── perfil_tutor.php    # Perfil público y reseñas
+    ├── panel.php           # Dashboard universal adaptativo (estudiante y tutor)
+    ├── perfil.php          # Perfil universal (gestión personal, archivos y vista pública)
     ├── reservar.php        # Formulario de agendamiento
-    ├── panel_estudiante.php# Dashboard del estudiante
-    ├── panel_tutor.php     # Dashboard del profesor
-    ├── subir_archivo.php   # Subida y gestión de fotos y hojas de vida
     ├── css/                # Estilos personalizados
     └── uploads/            # Archivos subidos protegidos contra ejecución PHP
 ```
