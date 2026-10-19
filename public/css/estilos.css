@@ -106,3 +106,28 @@ main {
     flex-shrink: 0;
 }
 
+/* Selector lateral de pestañas de Perfil */
+.perfil-menu-nav .nav-link {
+    border-radius: 10px;
+    color: #475569;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    text-decoration: none;
+}
+
+.perfil-menu-nav .nav-link:hover {
+    background-color: #f1f5f9;
+    color: var(--app-primary);
+}
+
+.perfil-menu-nav .nav-link.active {
+    background-color: #eff6ff !important;
+    color: var(--app-primary) !important;
+    border-color: #bfdbfe !important;
+}
+
+.perfil-menu-nav .nav-link.active strong {
+    color: var(--app-primary) !important;
+}
+
+

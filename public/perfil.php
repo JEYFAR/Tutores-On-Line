@@ -2,7 +2,7 @@
 /**
  * =============================================================================
  * TutoresOnLine - Perfil Universal (Público y Privado)
- * - Sin parámetro ?id=: Vista privada de "Mi Perfil" (edición, contraseña, archivos).
+ * - Sin parámetro ?id=: Vista privada de "Mi Perfil" con selector lateral de apartados.
  * - Con parámetro ?id=X: Vista pública del perfil (materias, tarifas, horarios, reseñas).
  * Compatible con PHP 7.4+
  * =============================================================================
@@ -15,11 +15,10 @@ $pdo = obtener_conexion();
 $id_param = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $modo_edicion = isset($_GET['editar']) && $_GET['editar'] == '1';
 
-// Si no se pasó id por GET, o se pide editar, o id es el propio usuario logueado sin especificar otro
+// Si no se pasó id por GET, o se pide editar, o id es el propio usuario logueado
 $es_mi_perfil = false;
 
 if ($id_param <= 0) {
-    // Si no hay id, debe ser un usuario logueado viendo su propio perfil
     requiere_login();
     $perfil_id = (int)$_SESSION['usuario_id'];
     $es_mi_perfil = true;
@@ -65,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 set_flash('danger', 'Ocurrió un error al actualizar tus datos.');
             }
         }
-        header('Location: ' . APP_URL . '/perfil.php');
+        header('Location: ' . APP_URL . '/perfil.php#tab-datos');
         exit;
     }
 
@@ -106,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
-        header('Location: ' . APP_URL . '/perfil.php');
+        header('Location: ' . APP_URL . '/perfil.php#tab-seguridad');
         exit;
     }
 
@@ -123,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 set_flash('danger', $resultado['mensaje']);
             }
         }
-        header('Location: ' . APP_URL . '/perfil.php');
+        header('Location: ' . APP_URL . '/perfil.php#tab-archivos');
         exit;
     }
 
@@ -144,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 set_flash('danger', 'No se pudo eliminar el archivo o no tienes permisos.');
             }
         }
-        header('Location: ' . APP_URL . '/perfil.php');
+        header('Location: ' . APP_URL . '/perfil.php#tab-archivos');
         exit;
     }
 }
@@ -185,13 +184,13 @@ $es_dueno = (!empty($_SESSION['usuario_id']) && (int)$_SESSION['usuario_id'] ===
 // RENDERIZADO SEGÚN MODO
 // =============================================================================
 
-// CASO A: MODO PRIVADO (MI PERFIL - Edición de datos, contraseña, archivos)
+// CASO A: MODO PRIVADO (MI PERFIL - Separado por apartados con selector lateral)
 if ($es_mi_perfil && $es_dueno):
     $archivos = listar_archivos_usuario($perfil_id);
     $titulo_pagina = 'Mi Perfil';
     require_once dirname(__DIR__) . '/includes/header.php';
 ?>
-    <!-- CABECERA MI PERFIL -->
+    <!-- CABECERA PRINCIPAL DE MI PERFIL -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card card-custom p-4 border-0 shadow-sm">
@@ -230,7 +229,7 @@ if ($es_mi_perfil && $es_dueno):
                     </div>
 
                     <div class="d-flex flex-column flex-sm-row gap-2">
-                        <a href="<?= APP_URL ?>/panel.php" class="btn btn-primary-custom btn-sm d-flex align-items-center justify-content-center gap-1">
+                        <a href="<?= APP_URL ?>/panel.php" class="btn btn-primary-custom btn-sm d-flex align-items-center justify-content-center gap-1 shadow-sm">
                             <i class="bi bi-speedometer2"></i> Mi Panel
                         </a>
                         <?php if ($perfil_usuario['rol'] === 'tutor'): ?>
@@ -244,210 +243,324 @@ if ($es_mi_perfil && $es_dueno):
         </div>
     </div>
 
+    <!-- DISTRIBUCIÓN POR APARTADOS: SELECTOR A LA IZQUIERDA Y CONTENIDO A LA DERECHA -->
     <div class="row g-4">
-        <!-- COLUMNA IZQUIERDA: DATOS Y SEGURIDAD -->
-        <div class="col-lg-6">
-            <!-- 1. Información Personal -->
-            <div class="card card-custom p-4 border-0 shadow-sm mb-4">
-                <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                    <i class="bi bi-person-gear text-primary"></i> Información Personal
-                </h5>
-
-                <form action="<?= APP_URL ?>/perfil.php" method="POST" autocomplete="off">
-                    <?= csrf_campo() ?>
-                    <input type="hidden" name="accion" value="actualizar_datos">
-
-                    <div class="mb-3">
-                        <label for="nombre" class="form-label fw-medium small">Nombre Completo</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
-                            <input type="text" class="form-control" id="nombre" name="nombre" value="<?= e($perfil_usuario['nombre']) ?>" required minlength="3">
+        <!-- COLUMNA IZQUIERDA: SELECTOR DE APARTADOS -->
+        <div class="col-lg-3 col-md-4">
+            <div class="card card-custom p-3 border-0 shadow-sm sticky-top" style="top: 85px;">
+                <div class="small fw-bold text-uppercase text-muted px-3 pt-2 pb-2">Configuración</div>
+                <div class="nav flex-column nav-pills perfil-menu-nav gap-1" id="perfilTabs" role="tablist" aria-orientation="vertical">
+                    <!-- Apartado 1: Datos Personales -->
+                    <button class="nav-link text-start active d-flex align-items-center gap-3 p-3" id="tab-btn-datos" data-bs-toggle="pill" data-bs-target="#tab-datos" type="button" role="tab" aria-controls="tab-datos" aria-selected="true">
+                        <i class="bi bi-person-gear fs-4 text-primary"></i>
+                        <div class="lh-sm">
+                            <strong class="d-block text-dark">Información Personal</strong>
+                            <small class="text-muted" style="font-size: 0.78rem;">Nombre y ciudad</small>
                         </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="correo" class="form-label fw-medium small">Correo Electrónico</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
-                            <input type="email" class="form-control" id="correo" value="<?= e($perfil_usuario['correo']) ?>" disabled readonly>
-                        </div>
-                        <small class="text-muted">El correo electrónico no puede ser modificado por seguridad.</small>
-                    </div>
-
-                    <div class="mb-4">
-                        <label for="ciudad" class="form-label fw-medium small">Ciudad de Residencia</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light text-muted"><i class="bi bi-geo-alt"></i></span>
-                            <input type="text" class="form-control" id="ciudad" name="ciudad" value="<?= e($perfil_usuario['ciudad'] ?? '') ?>" required placeholder="Ej. Bogotá, Medellín, Cali">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary-custom btn-sm">
-                        <i class="bi bi-check2-circle me-1"></i> Guardar Cambios
                     </button>
-                </form>
-            </div>
 
-            <!-- 2. Seguridad y Contraseña -->
-            <div class="card card-custom p-4 border-0 shadow-sm">
-                <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-                    <i class="bi bi-shield-lock text-primary"></i> Seguridad de la Cuenta
-                </h5>
-
-                <?php
-                $stmt_hash = $pdo->prepare("SELECT `password_hash` FROM `usuarios` WHERE `id` = ? LIMIT 1");
-                $stmt_hash->execute([$perfil_id]);
-                $tiene_password = !empty($stmt_hash->fetchColumn());
-                ?>
-
-                <?php if (!$tiene_password): ?>
-                    <div class="alert alert-info py-2 small mb-3">
-                        <i class="bi bi-google me-1"></i> Tu cuenta está autenticada con <strong>Google</strong>. Puedes establecer una contraseña local si lo deseas.
-                    </div>
-                <?php endif; ?>
-
-                <form action="<?= APP_URL ?>/perfil.php" method="POST" autocomplete="off">
-                    <?= csrf_campo() ?>
-                    <input type="hidden" name="accion" value="cambiar_password">
-
-                    <?php if ($tiene_password): ?>
-                        <div class="mb-3">
-                            <label for="password_actual" class="form-label fw-medium small">Contraseña Actual</label>
-                            <input type="password" class="form-control form-control-sm" id="password_actual" name="password_actual" required placeholder="Tu contraseña actual">
+                    <!-- Apartado 2: Seguridad y Contraseña -->
+                    <button class="nav-link text-start d-flex align-items-center gap-3 p-3" id="tab-btn-seguridad" data-bs-toggle="pill" data-bs-target="#tab-seguridad" type="button" role="tab" aria-controls="tab-seguridad" aria-selected="false">
+                        <i class="bi bi-shield-lock fs-4 text-primary"></i>
+                        <div class="lh-sm">
+                            <strong class="d-block text-dark">Seguridad de Cuenta</strong>
+                            <small class="text-muted" style="font-size: 0.78rem;">Contraseña de acceso</small>
                         </div>
+                    </button>
+
+                    <!-- Apartado 3: Foto y Documentos -->
+                    <button class="nav-link text-start d-flex align-items-center gap-3 p-3" id="tab-btn-archivos" data-bs-toggle="pill" data-bs-target="#tab-archivos" type="button" role="tab" aria-controls="tab-archivos" aria-selected="false">
+                        <i class="bi bi-cloud-arrow-up fs-4 text-primary"></i>
+                        <div class="lh-sm">
+                            <strong class="d-block text-dark">Foto y Documentos</strong>
+                            <small class="text-muted" style="font-size: 0.78rem;">Avatar y certificados</small>
+                        </div>
+                    </button>
+
+                    <?php if ($perfil_usuario['rol'] === 'tutor'): ?>
+                        <hr class="my-2">
+                        <a href="<?= APP_URL ?>/perfil.php?id=<?= $perfil_id ?>" class="nav-link text-start d-flex align-items-center gap-3 p-3 text-success">
+                            <i class="bi bi-eye fs-4"></i>
+                            <div class="lh-sm">
+                                <strong class="d-block text-success">Ver Perfil Público</strong>
+                                <small class="text-muted" style="font-size: 0.78rem;">Vista de los estudiantes</small>
+                            </div>
+                        </a>
                     <?php endif; ?>
-
-                    <div class="mb-3">
-                        <label for="password_nuevo" class="form-label fw-medium small">Nueva Contraseña</label>
-                        <input type="password" class="form-control form-control-sm" id="password_nuevo" name="password_nuevo" required minlength="6" placeholder="Mínimo 6 caracteres">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="password_conf" class="form-label fw-medium small">Confirmar Nueva Contraseña</label>
-                        <input type="password" class="form-control form-control-sm" id="password_conf" name="password_conf" required minlength="6" placeholder="Repite la nueva contraseña">
-                    </div>
-
-                    <button type="submit" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-key me-1"></i> <?= $tiene_password ? 'Actualizar Contraseña' : 'Crear Contraseña' ?>
-                    </button>
-                </form>
+                </div>
             </div>
         </div>
 
-        <!-- COLUMNA DERECHA: FOTO Y ARCHIVOS -->
-        <div class="col-lg-6">
-            <!-- 1. Subir Foto de Perfil -->
-            <div class="card card-custom p-4 border-0 shadow-sm mb-4">
-                <h5 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
-                    <i class="bi bi-image text-primary"></i> Foto de Perfil
-                </h5>
-                <p class="text-muted small mb-3">Sube tu foto personal en formato JPG o PNG (máx. 2 MB).</p>
+        <!-- COLUMNA DERECHA: CONTENIDO DEL APARTADO SELECCIONADO -->
+        <div class="col-lg-9 col-md-8">
+            <div class="tab-content" id="perfilTabsContent">
 
-                <form action="<?= APP_URL ?>/perfil.php" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row gap-2">
-                    <?= csrf_campo() ?>
-                    <input type="hidden" name="accion" value="subir_archivo">
-                    <input type="hidden" name="tipo" value="foto">
+                <!-- ========================================================= -->
+                <!-- APARTADO 1: INFORMACIÓN PERSONAL                          -->
+                <!-- ========================================================= -->
+                <div class="tab-pane fade show active" id="tab-datos" role="tabpanel" aria-labelledby="tab-btn-datos" tabindex="0">
+                    <div class="card card-custom p-4 border-0 shadow-sm">
+                        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                            <i class="bi bi-person-gear fs-4 text-primary"></i>
+                            <h4 class="fw-bold text-dark mb-0">Información Personal</h4>
+                        </div>
+                        <p class="text-muted small mb-4">Actualiza tu nombre completo y la ciudad en la que te encuentras.</p>
 
-                    <input type="file" name="archivo" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required>
-                    <button type="submit" class="btn btn-primary-custom btn-sm flex-shrink-0">
-                        <i class="bi bi-upload me-1"></i> Subir Foto
-                    </button>
-                </form>
-            </div>
+                        <form action="<?= APP_URL ?>/perfil.php" method="POST" autocomplete="off">
+                            <?= csrf_campo() ?>
+                            <input type="hidden" name="accion" value="actualizar_datos">
 
-            <!-- 2. Subir Hoja de Vida (PDF) para Tutores -->
-            <?php if ($perfil_usuario['rol'] === 'tutor'): ?>
-                <div class="card card-custom p-4 border-0 shadow-sm mb-4">
-                    <h5 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
-                        <i class="bi bi-file-earmark-pdf text-danger"></i> Hoja de Vida / Certificados
-                    </h5>
-                    <p class="text-muted small mb-3">Sube tu currículum o certificados en formato PDF (máx. 5 MB) para que los estudiantes los consulten.</p>
+                            <div class="mb-3">
+                                <label for="nombre" class="form-label fw-medium small">Nombre Completo</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" value="<?= e($perfil_usuario['nombre']) ?>" required minlength="3">
+                                </div>
+                            </div>
 
-                    <form action="<?= APP_URL ?>/perfil.php" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row gap-2">
-                        <?= csrf_campo() ?>
-                        <input type="hidden" name="accion" value="subir_archivo">
-                        <input type="hidden" name="tipo" value="hoja_vida">
+                            <div class="mb-3">
+                                <label for="correo" class="form-label fw-medium small">Correo Electrónico (Asociado a tu cuenta)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control" id="correo" value="<?= e($perfil_usuario['correo']) ?>" disabled readonly>
+                                </div>
+                                <small class="text-muted">El correo electrónico no puede ser modificado por motivos de seguridad.</small>
+                            </div>
 
-                        <input type="file" name="archivo" class="form-control form-control-sm" accept=".pdf,application/pdf" required>
-                        <button type="submit" class="btn btn-outline-danger btn-sm flex-shrink-0">
-                            <i class="bi bi-upload me-1"></i> Subir PDF
-                        </button>
-                    </form>
-                </div>
-            <?php endif; ?>
+                            <div class="mb-4">
+                                <label for="ciudad" class="form-label fw-medium small">Ciudad de Residencia</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted"><i class="bi bi-geo-alt"></i></span>
+                                    <input type="text" class="form-control" id="ciudad" name="ciudad" value="<?= e($perfil_usuario['ciudad'] ?? '') ?>" required placeholder="Ej. Bogotá, Medellín, Cali">
+                                </div>
+                            </div>
 
-            <!-- 3. Lista de Archivos -->
-            <div class="card card-custom p-4 border-0 shadow-sm">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                        <i class="bi bi-folder2-open text-primary"></i> Mis Archivos Guardados
-                    </h5>
-                    <span class="badge bg-light text-secondary border">Total: <?= count($archivos) ?></span>
-                </div>
-
-                <?php if (empty($archivos)): ?>
-                    <div class="text-center py-4 text-muted small">
-                        <i class="bi bi-cloud-arrow-up fs-2 d-block mb-2 text-secondary"></i>
-                        Aún no has subido archivos a tu cuenta.
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary-custom px-4">
+                                    <i class="bi bi-check2-circle me-1"></i> Guardar Cambios
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                <?php else: ?>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0 small">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Tipo</th>
-                                    <th>Nombre</th>
-                                    <th>Tamaño</th>
-                                    <th>Fecha</th>
-                                    <th class="text-end">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($archivos as $arc): ?>
-                                    <tr>
-                                        <td>
-                                            <?php if ($arc['tipo'] === 'foto'): ?>
-                                                <span class="badge bg-info-subtle text-info border"><i class="bi bi-image me-1"></i> Foto</span>
-                                            <?php else: ?>
-                                                <span class="badge bg-danger-subtle text-danger border"><i class="bi bi-file-earmark-pdf me-1"></i> PDF</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <div class="fw-medium text-dark text-truncate" style="max-width: 140px;" title="<?= e($arc['nombre_original']) ?>">
-                                                <?= e($arc['nombre_original']) ?>
-                                            </div>
-                                        </td>
-                                        <td><span class="text-muted"><?= number_format($arc['tamano'] / 1024, 1) ?> KB</span></td>
-                                        <td><span class="text-muted"><?= date('d/m/Y', strtotime($arc['subido_en'])) ?></span></td>
-                                        <td class="text-end">
-                                            <div class="d-inline-flex gap-1">
-                                                <a href="<?= APP_URL ?>/uploads/<?= e($arc['nombre_guardado']) ?>" target="_blank" class="btn btn-sm btn-outline-primary p-1 px-2" title="Ver Archivo">
-                                                    <i class="bi bi-eye"></i>
-                                                </a>
-                                                <form action="<?= APP_URL ?>/perfil.php" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este archivo?');" class="d-inline">
-                                                    <?= csrf_campo() ?>
-                                                    <input type="hidden" name="accion" value="eliminar_archivo">
-                                                    <input type="hidden" name="archivo_id" value="<?= (int)$arc['id'] ?>">
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger p-1 px-2" title="Eliminar Archivo">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- APARTADO 2: SEGURIDAD Y CONTRASEÑA                        -->
+                <!-- ========================================================= -->
+                <div class="tab-pane fade" id="tab-seguridad" role="tabpanel" aria-labelledby="tab-btn-seguridad" tabindex="0">
+                    <div class="card card-custom p-4 border-0 shadow-sm">
+                        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                            <i class="bi bi-shield-lock fs-4 text-primary"></i>
+                            <h4 class="fw-bold text-dark mb-0">Seguridad de la Cuenta</h4>
+                        </div>
+                        <p class="text-muted small mb-4">Administra tu clave de acceso para mantener protegida tu cuenta.</p>
+
+                        <?php
+                        $stmt_hash = $pdo->prepare("SELECT `password_hash` FROM `usuarios` WHERE `id` = ? LIMIT 1");
+                        $stmt_hash->execute([$perfil_id]);
+                        $tiene_password = !empty($stmt_hash->fetchColumn());
+                        ?>
+
+                        <?php if (!$tiene_password): ?>
+                            <div class="alert alert-info py-3 d-flex align-items-center gap-3 mb-4">
+                                <i class="bi bi-google fs-3 text-danger"></i>
+                                <div>
+                                    <strong>Autenticado con Google:</strong> Tu cuenta ingresa mediante Google OAuth2. Si lo deseas, puedes establecer una contraseña local a continuación para también iniciar sesión con correo y clave.
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <form action="<?= APP_URL ?>/perfil.php" method="POST" autocomplete="off">
+                            <?= csrf_campo() ?>
+                            <input type="hidden" name="accion" value="cambiar_password">
+
+                            <?php if ($tiene_password): ?>
+                                <div class="mb-3">
+                                    <label for="password_actual" class="form-label fw-medium small">Contraseña Actual</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted"><i class="bi bi-lock"></i></span>
+                                        <input type="password" class="form-control" id="password_actual" name="password_actual" required placeholder="Tu contraseña actual">
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label for="password_nuevo" class="form-label fw-medium small">Nueva Contraseña</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted"><i class="bi bi-key"></i></span>
+                                        <input type="password" class="form-control" id="password_nuevo" name="password_nuevo" required minlength="6" placeholder="Mínimo 6 caracteres">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="password_conf" class="form-label fw-medium small">Confirmar Nueva Contraseña</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted"><i class="bi bi-shield-check"></i></span>
+                                        <input type="password" class="form-control" id="password_conf" name="password_conf" required minlength="6" placeholder="Repite la nueva contraseña">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-outline-primary px-4">
+                                    <i class="bi bi-key me-1"></i> <?= $tiene_password ? 'Actualizar Contraseña' : 'Crear Contraseña' ?>
+                                </button>
+                            </div>
+                        </form>
                     </div>
-                <?php endif; ?>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- APARTADO 3: FOTO DE PERFIL Y ARCHIVOS / DOCUMENTOS        -->
+                <!-- ========================================================= -->
+                <div class="tab-pane fade" id="tab-archivos" role="tabpanel" aria-labelledby="tab-btn-archivos" tabindex="0">
+                    <!-- 1. Subida de Foto de Perfil -->
+                    <div class="card card-custom p-4 border-0 shadow-sm mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                            <i class="bi bi-image fs-4 text-primary"></i>
+                            <h4 class="fw-bold text-dark mb-0">Foto de Perfil (Avatar)</h4>
+                        </div>
+                        <p class="text-muted small mb-3">Sube tu fotografía personal en formato JPG o PNG (máximo 2 MB).</p>
+
+                        <form action="<?= APP_URL ?>/perfil.php" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row gap-2">
+                            <?= csrf_campo() ?>
+                            <input type="hidden" name="accion" value="subir_archivo">
+                            <input type="hidden" name="tipo" value="foto">
+
+                            <input type="file" name="archivo" class="form-control" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required>
+                            <button type="submit" class="btn btn-primary-custom flex-shrink-0 px-4">
+                                <i class="bi bi-upload me-1"></i> Subir Foto
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- 2. Subida de Hoja de Vida / Certificados (Para Tutores) -->
+                    <?php if ($perfil_usuario['rol'] === 'tutor'): ?>
+                        <div class="card card-custom p-4 border-0 shadow-sm mb-4">
+                            <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                                <i class="bi bi-file-earmark-pdf fs-4 text-danger"></i>
+                                <h4 class="fw-bold text-dark mb-0">Hoja de Vida / Certificados</h4>
+                            </div>
+                            <p class="text-muted small mb-3">Sube tu currículum académico o títulos en formato PDF (máximo 5 MB) para que los estudiantes puedan consultarlos.</p>
+
+                            <form action="<?= APP_URL ?>/perfil.php" method="POST" enctype="multipart/form-data" class="d-flex flex-column flex-sm-row gap-2">
+                                <?= csrf_campo() ?>
+                                <input type="hidden" name="accion" value="subir_archivo">
+                                <input type="hidden" name="tipo" value="hoja_vida">
+
+                                <input type="file" name="archivo" class="form-control" accept=".pdf,application/pdf" required>
+                                <button type="submit" class="btn btn-outline-danger flex-shrink-0 px-4">
+                                    <i class="bi bi-upload me-1"></i> Subir PDF
+                                </button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- 3. Lista de Archivos Guardados -->
+                    <div class="card card-custom p-4 border-0 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-folder2-open fs-4 text-primary"></i>
+                                <h5 class="fw-bold text-dark mb-0">Mis Archivos Guardados</h5>
+                            </div>
+                            <span class="badge bg-light text-secondary border">Total: <?= count($archivos) ?></span>
+                        </div>
+
+                        <?php if (empty($archivos)): ?>
+                            <div class="text-center py-5 text-muted">
+                                <i class="bi bi-cloud-arrow-up fs-1 d-block mb-2 text-secondary"></i>
+                                Aún no has subido archivos a tu cuenta.
+                            </div>
+                        <?php else: ?>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Tipo</th>
+                                            <th>Nombre del Archivo</th>
+                                            <th>Tamaño</th>
+                                            <th>Fecha</th>
+                                            <th class="text-end">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($archivos as $arc): ?>
+                                            <tr>
+                                                <td>
+                                                    <?php if ($arc['tipo'] === 'foto'): ?>
+                                                        <span class="badge bg-info-subtle text-info border"><i class="bi bi-image me-1"></i> Foto</span>
+                                                    <?php else: ?>
+                                                        <span class="badge bg-danger-subtle text-danger border"><i class="bi bi-file-earmark-pdf me-1"></i> PDF</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-medium text-dark text-truncate" style="max-width: 220px;" title="<?= e($arc['nombre_original']) ?>">
+                                                        <?= e($arc['nombre_original']) ?>
+                                                    </div>
+                                                </td>
+                                                <td><span class="text-muted small"><?= number_format($arc['tamano'] / 1024, 1) ?> KB</span></td>
+                                                <td><span class="text-muted small"><?= date('d/m/Y', strtotime($arc['subido_en'])) ?></span></td>
+                                                <td class="text-end">
+                                                    <div class="d-inline-flex gap-2">
+                                                        <a href="<?= APP_URL ?>/uploads/<?= e($arc['nombre_guardado']) ?>" target="_blank" class="btn btn-sm btn-outline-primary" title="Ver Archivo">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        <form action="<?= APP_URL ?>/perfil.php" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este archivo?');" class="d-inline">
+                                                            <?= csrf_campo() ?>
+                                                            <input type="hidden" name="accion" value="eliminar_archivo">
+                                                            <input type="hidden" name="archivo_id" value="<?= (int)$arc['id'] ?>">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Archivo">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 
+    <!-- Script para persistir pestaña activa según hash en URL -->
+    <?php
+    $scripts_extra = '
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var hash = window.location.hash;
+        if (hash) {
+            var triggerBtn = document.querySelector(\'button[data-bs-target="\' + hash + \'"]\');
+            if (triggerBtn) {
+                var tab = new bootstrap.Tab(triggerBtn);
+                tab.show();
+            }
+        }
+
+        // Actualizar URL al hacer click en cada pestaña
+        var tabBtns = document.querySelectorAll(\'#perfilTabs button[data-bs-toggle="pill"]\');
+        tabBtns.forEach(function(btn) {
+            btn.addEventListener("shown.bs.tab", function(event) {
+                var targetId = event.target.getAttribute("data-bs-target");
+                if (targetId) {
+                    history.replaceState(null, null, targetId);
+                }
+            });
+        });
+    });
+    </script>
+    ';
+    ?>
+
 <?php
 // CASO B: MODO PÚBLICO (PERFIL PÚBLICO DE TUTOR O ESTUDIANTE)
 else:
-    // Si es tutor, consultar materias, horarios, calificaciones y hoja de vida
     $materias = [];
     $disponibilidad = [];
     $calificaciones = [];
@@ -456,7 +569,6 @@ else:
     $hoja_vida = null;
 
     if ($perfil_usuario['rol'] === 'tutor') {
-        // Materias
         $stmt_mat = $pdo->prepare(
             "SELECT tm.*, m.nombre AS materia_nombre, n.nombre AS nivel_nombre
              FROM `tutor_materia` tm
@@ -468,7 +580,6 @@ else:
         $stmt_mat->execute([$perfil_id]);
         $materias = $stmt_mat->fetchAll();
 
-        // Disponibilidad
         $stmt_disp = $pdo->prepare(
             "SELECT * FROM `disponibilidad`
              WHERE `tutor_id` = ?
@@ -477,7 +588,6 @@ else:
         $stmt_disp->execute([$perfil_id]);
         $disponibilidad = $stmt_disp->fetchAll();
 
-        // Calificaciones
         $stmt_calif = $pdo->prepare(
             "SELECT c.*, u.nombre AS estudiante_nombre
              FROM `calificaciones` c
@@ -488,14 +598,12 @@ else:
         $stmt_calif->execute([$perfil_id]);
         $calificaciones = $stmt_calif->fetchAll();
 
-        // Promedio
         $stmt_prom = $pdo->prepare("SELECT COALESCE(ROUND(AVG(puntaje), 1), 5.0) AS promedio, COUNT(*) AS total FROM `calificaciones` WHERE `tutor_id` = ?");
         $stmt_prom->execute([$perfil_id]);
         $rating_info = $stmt_prom->fetch();
         $promedio = (float)$rating_info['promedio'];
         $total_resenas = (int)$rating_info['total'];
 
-        // Hoja de vida
         $stmt_cv = $pdo->prepare("SELECT `nombre_guardado`, `nombre_original` FROM `archivos` WHERE `usuario_id` = ? AND `tipo` = 'hoja_vida' ORDER BY `subido_en` DESC LIMIT 1");
         $stmt_cv->execute([$perfil_id]);
         $hoja_vida = $stmt_cv->fetch();
@@ -548,8 +656,8 @@ else:
 
                     <div class="d-grid gap-2">
                         <?php if ($es_dueno): ?>
-                            <a href="<?= APP_URL ?>/perfil.php?editar=1" class="btn btn-primary-custom py-2">
-                                <i class="bi bi-pencil-square me-1"></i> Editar Mi Perfil
+                            <a href="<?= APP_URL ?>/perfil.php" class="btn btn-primary-custom py-2">
+                                <i class="bi bi-pencil-square me-1"></i> Configurar Mi Perfil
                             </a>
                         <?php else: ?>
                             <a href="<?= APP_URL ?>/reservar.php?tutor_id=<?= (int)$perfil_usuario['id'] ?>" class="btn btn-primary-custom py-2">
@@ -564,8 +672,8 @@ else:
                     <hr class="my-3">
                     <?php if ($es_dueno): ?>
                         <div class="d-grid gap-2">
-                            <a href="<?= APP_URL ?>/perfil.php?editar=1" class="btn btn-primary-custom py-2">
-                                <i class="bi bi-pencil-square me-1"></i> Editar Mi Perfil
+                            <a href="<?= APP_URL ?>/perfil.php" class="btn btn-primary-custom py-2">
+                                <i class="bi bi-pencil-square me-1"></i> Configurar Mi Perfil
                             </a>
                         </div>
                     <?php endif; ?>
