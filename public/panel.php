@@ -171,7 +171,7 @@ require_once dirname(__DIR__) . '/includes/header.php';
     <div class="col-12">
         <div class="card card-custom p-4 border-0 shadow-sm <?= $rol === 'tutor' ? 'bg-success text-white' : 'bg-primary text-white' ?>">
             <div class="row align-items-center">
-                <div class="col-md-8">
+                <div class="col-md-7">
                     <span class="badge bg-white text-dark mb-2 fw-semibold">
                         <?= $rol === 'tutor' ? 'Panel de Tutor' : 'Panel de Estudiante' ?>
                     </span>
@@ -183,14 +183,17 @@ require_once dirname(__DIR__) . '/includes/header.php';
                         <?php endif; ?>
                     </p>
                 </div>
-                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex flex-wrap gap-2 justify-content-md-end">
+                    <a href="<?= APP_URL ?>/perfil.php" class="btn btn-light text-dark fw-semibold shadow-sm">
+                        <i class="bi bi-person-gear me-1"></i> Mi Perfil
+                    </a>
                     <?php if ($rol === 'tutor'): ?>
                         <a href="<?= APP_URL ?>/perfil_tutor.php?id=<?= $usuario_id ?>" class="btn btn-light text-success fw-semibold shadow-sm">
-                            <i class="bi bi-eye me-1"></i> Ver Mi Perfil Público
+                            <i class="bi bi-eye me-1"></i> Perfil Público
                         </a>
                     <?php else: ?>
                         <a href="<?= APP_URL ?>/buscar.php" class="btn btn-light text-primary fw-semibold shadow-sm">
-                            <i class="bi bi-search me-1"></i> Buscar y Agendar Tutoría
+                            <i class="bi bi-search me-1"></i> Buscar Tutores
                         </a>
                     <?php endif; ?>
                 </div>

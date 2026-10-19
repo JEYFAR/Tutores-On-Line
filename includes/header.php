@@ -70,6 +70,13 @@ $rol_usuario = $_SESSION['rol'] ?? '';
                         <i class="bi bi-search me-1"></i> Buscar Tutores
                     </a>
                 </li>
+                <?php if ($usuario_autenticado): ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $pagina_actual === 'panel.php' ? 'active fw-semibold text-primary' : '' ?>" href="<?= APP_URL ?>/panel.php">
+                            <i class="bi bi-speedometer2 me-1"></i> Mi Panel
+                        </a>
+                    </li>
+                <?php endif; ?>
             </ul>
 
             <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
@@ -90,7 +97,12 @@ $rol_usuario = $_SESSION['rol'] ?? '';
                                 <h6 class="dropdown-header">Mi Cuenta (<?= ucfirst(e($rol_usuario)) ?>)</h6>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="<?= APP_URL ?>/panel.php">
+                                <a class="dropdown-item <?= $pagina_actual === 'perfil.php' ? 'active fw-semibold' : '' ?>" href="<?= APP_URL ?>/perfil.php">
+                                    <i class="bi bi-person-circle me-2"></i> Mi Perfil
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item <?= $pagina_actual === 'panel.php' ? 'active fw-semibold' : '' ?>" href="<?= APP_URL ?>/panel.php">
                                     <i class="bi bi-speedometer2 me-2"></i> Mi Panel
                                 </a>
                             </li>
@@ -101,11 +113,6 @@ $rol_usuario = $_SESSION['rol'] ?? '';
                                     </a>
                                 </li>
                             <?php endif; ?>
-                            <li>
-                                <a class="dropdown-item" href="<?= APP_URL ?>/subir_archivo.php">
-                                    <i class="bi bi-cloud-arrow-up me-2"></i> Mis Archivos / Documentos
-                                </a>
-                            </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item text-danger" href="<?= APP_URL ?>/logout.php">
