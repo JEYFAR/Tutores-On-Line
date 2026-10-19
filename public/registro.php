@@ -146,9 +146,13 @@ require_once dirname(__DIR__) . '/includes/header.php';
     <div class="col-md-7 col-lg-6">
         <div class="card card-custom p-4 border-0 shadow-sm">
             <div class="text-center mb-4">
-                <div class="bg-primary-subtle text-primary p-3 rounded-circle d-inline-flex mb-2">
-                    <i class="bi <?= $es_google ? 'bi-person-check' : 'bi-person-plus' ?> fs-3"></i>
-                </div>
+                <?php if ($es_google && !empty($datos_google['foto'])): ?>
+                    <img src="<?= e($datos_google['foto']) ?>" alt="Avatar" class="icono-circulo shadow-sm mb-2" style="object-fit: cover;" referrerpolicy="no-referrer">
+                <?php else: ?>
+                    <div class="bg-primary-subtle text-primary icono-circulo mb-2">
+                        <i class="bi <?= $es_google ? 'bi-person-check' : 'bi-person-plus' ?> fs-3"></i>
+                    </div>
+                <?php endif; ?>
                 <h3 class="fw-bold mb-1"><?= $es_google ? 'Completa tu Perfil' : 'Crea tu Cuenta' ?></h3>
                 <p class="text-muted small">
                     <?= $es_google ? 'Elige tu rol y ciudad para finalizar tu registro con Google' : 'Únete como estudiante o como profesor tutor' ?>

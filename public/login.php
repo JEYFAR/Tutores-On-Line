@@ -87,7 +87,7 @@ require_once dirname(__DIR__) . '/includes/header.php';
     <div class="col-md-6 col-lg-5">
         <div class="card card-custom p-4 border-0 shadow-sm">
             <div class="text-center mb-4">
-                <div class="bg-primary-subtle text-primary p-3 rounded-circle d-inline-flex mb-2">
+                <div class="bg-primary-subtle text-primary icono-circulo mb-2">
                     <i class="bi bi-box-arrow-in-right fs-3"></i>
                 </div>
                 <h3 class="fw-bold mb-1">Iniciar Sesión</h3>
