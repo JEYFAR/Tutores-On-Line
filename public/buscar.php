@@ -10,20 +10,8 @@
 
 require_once dirname(__DIR__) . '/includes/auth.php';
 
-// Manejo de la cookie de preferencia de búsqueda
-$materia_get = trim($_GET['materia'] ?? '');
-$materia_inicial = '';
-
-if (!empty($materia_get)) {
-    $materia_inicial = $materia_get;
-    // Guardar preferencia en cookie por 30 días
-    $es_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-    setcookie('ultima_materia_buscada', $materia_get, time() + (30 * 86400), '/', '', $es_https, true);
-} elseif (!empty($_COOKIE['ultima_materia_buscada'])) {
-    // Prellenar con la última materia buscada si no se pasó por URL
-    $materia_inicial = $_COOKIE['ultima_materia_buscada'];
-}
-
+// Parámetros de búsqueda iniciales por URL
+$materia_inicial = trim($_GET['materia'] ?? ($_GET['q'] ?? ''));
 $ciudad_inicial = trim($_GET['ciudad'] ?? '');
 $modalidad_inicial = trim($_GET['modalidad'] ?? '');
 $nivel_inicial = (int)($_GET['nivel_id'] ?? 0);
@@ -52,12 +40,12 @@ require_once dirname(__DIR__) . '/includes/header.php';
     <!-- Barra de Filtros -->
     <div class="card card-custom p-4 border-0 shadow-sm mb-4">
         <form @submit.prevent="realizarBusqueda" class="row g-3 align-items-end">
-            <!-- Filtro: Materia -->
+            <!-- Filtro: Materia o Tutor -->
             <div class="col-md-4 col-sm-6">
-                <label class="form-label fw-medium small mb-1">Materia o Especialidad</label>
+                <label class="form-label fw-medium small mb-1">Materia, Especialidad o Nombre</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" v-model="filtros.materia" placeholder="Ej. Cálculo, Programación..." @keyup.enter="realizarBusqueda">
+                    <input type="text" class="form-control" v-model="filtros.materia" placeholder="Ej. Cálculo, Programación, Juan..." @keyup.enter="realizarBusqueda">
                 </div>
             </div>
 
@@ -202,12 +190,18 @@ createApp({
             this.cargando = true;
             try {
                 const params = new URLSearchParams();
-                if (this.filtros.materia) params.append("materia", this.filtros.materia);
+                const mat = (this.filtros.materia || "").trim();
+                const ciu = (this.filtros.ciudad || "").trim();
+
+                if (mat) params.append("materia", mat);
                 if (this.filtros.nivel_id > 0) params.append("nivel_id", this.filtros.nivel_id);
                 if (this.filtros.modalidad) params.append("modalidad", this.filtros.modalidad);
-                if (this.filtros.ciudad) params.append("ciudad", this.filtros.ciudad);
+                if (ciu) params.append("ciudad", ciu);
 
                 const res = await fetch("' . APP_URL . '/api/buscar_tutores.php?" + params.toString());
+                if (!res.ok) {
+                    throw new Error("Respuesta inválida del servidor: " + res.status);
+                }
                 const data = await res.json();
                 if (data.exito) {
                     this.tutores = data.tutores;
@@ -228,6 +222,7 @@ createApp({
                 modalidad: "",
                 ciudad: ""
             };
+            document.cookie = "ultima_materia_buscada=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             this.realizarBusqueda();
         },
         formatoMoneda(val) {

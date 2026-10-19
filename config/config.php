@@ -97,6 +97,11 @@ date_default_timezone_set('America/Bogota');
 $app_url = env('APP_URL', 'http://localhost/tutoresonline/public');
 define('APP_URL', rtrim($app_url, '/'));
 
+// URL base del proyecto y de la API
+$base_url = preg_replace('#/public$#', '', APP_URL);
+define('BASE_URL', $base_url);
+define('API_URL', BASE_URL . '/api');
+
 // Configuración de manejo de errores
 $es_debug = env('APP_DEBUG', true);
 

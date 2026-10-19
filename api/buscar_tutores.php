@@ -15,7 +15,7 @@ require_once dirname(__DIR__) . '/includes/seguridad.php';
 try {
     $pdo = obtener_conexion();
 
-    $materia   = trim($_GET['materia'] ?? '');
+    $materia   = trim($_GET['materia'] ?? ($_GET['q'] ?? ''));
     $nivel_id  = (int)($_GET['nivel_id'] ?? 0);
     $ciudad    = trim($_GET['ciudad'] ?? '');
     $modalidad = trim($_GET['modalidad'] ?? '');
@@ -24,9 +24,10 @@ try {
     $condiciones = ["u.rol = 'tutor'"];
     $parametros = [];
 
-    // Si se especifica materia, se filtra por la especialidad
+    // Si se especifica materia o tutor, se filtra por la especialidad o nombre
     if (!empty($materia)) {
-        $condiciones[] = "m.nombre LIKE ?";
+        $condiciones[] = "(m.nombre LIKE ? OR u.nombre LIKE ?)";
+        $parametros[] = "%{$materia}%";
         $parametros[] = "%{$materia}%";
     }
 
@@ -68,11 +69,20 @@ try {
     // Formatear salida para el frontend
     $resultado = [];
     foreach ($tutores as $t) {
+        $foto_url = null;
+        if (!empty($t['foto'])) {
+            if (strpos($t['foto'], 'http://') === 0 || strpos($t['foto'], 'https://') === 0) {
+                $foto_url = $t['foto'];
+            } else {
+                $foto_url = APP_URL . '/uploads/' . $t['foto'];
+            }
+        }
+
         $resultado[] = [
             'id' => (int)$t['id'],
             'nombre' => $t['nombre'],
             'ciudad' => $t['ciudad'] ?: 'Colombia',
-            'foto' => $t['foto'] ? APP_URL . '/uploads/' . $t['foto'] : null,
+            'foto' => $foto_url,
             'materias' => $t['materias_texto'],
             'tarifa_min' => (float)$t['tarifa_min'],
             'tarifa_max' => (float)$t['tarifa_max'],
