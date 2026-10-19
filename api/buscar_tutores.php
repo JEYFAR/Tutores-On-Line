@@ -21,9 +21,10 @@ try {
     $modalidad = trim($_GET['modalidad'] ?? '');
 
     // Construcción dinámica de consulta segura con parámetros preparados
-    $condiciones = ["u.rol = 'tutor'", "u.correo_verificado = 1"];
+    $condiciones = ["u.rol = 'tutor'"];
     $parametros = [];
 
+    // Si se especifica materia, se filtra por la especialidad
     if (!empty($materia)) {
         $condiciones[] = "m.nombre LIKE ?";
         $parametros[] = "%{$materia}%";
@@ -47,14 +48,14 @@ try {
     $where = implode(' AND ', $condiciones);
 
     $sql = "SELECT u.id, u.nombre, u.ciudad, u.foto,
-                   GROUP_CONCAT(DISTINCT m.nombre ORDER BY m.nombre SEPARATOR ', ') AS materias_texto,
-                   MIN(tm.tarifa_hora) AS tarifa_min,
-                   MAX(tm.tarifa_hora) AS tarifa_max,
+                   COALESCE(GROUP_CONCAT(DISTINCT m.nombre ORDER BY m.nombre SEPARATOR ', '), 'Especialidades por definir') AS materias_texto,
+                   COALESCE(MIN(tm.tarifa_hora), 0) AS tarifa_min,
+                   COALESCE(MAX(tm.tarifa_hora), 0) AS tarifa_max,
                    COALESCE(ROUND(AVG(c.puntaje), 1), 5.0) AS calificacion,
                    COUNT(DISTINCT c.id) AS total_calificaciones
             FROM usuarios u
-            INNER JOIN tutor_materia tm ON tm.tutor_id = u.id
-            INNER JOIN materias m ON m.id = tm.materia_id
+            LEFT JOIN tutor_materia tm ON tm.tutor_id = u.id
+            LEFT JOIN materias m ON m.id = tm.materia_id
             LEFT JOIN calificaciones c ON c.tutor_id = u.id
             WHERE {$where}
             GROUP BY u.id, u.nombre, u.ciudad, u.foto

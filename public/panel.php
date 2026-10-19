@@ -106,6 +106,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: ' . APP_URL . '/panel.php');
             exit;
         }
+
+        // Agregar o actualizar especialidad/materia ofertada
+        if ($accion === 'agregar_materia') {
+            $materia_id_input = trim($_POST['materia_id'] ?? '');
+            $nueva_materia    = trim($_POST['nueva_materia'] ?? '');
+            $nivel_id         = (int)($_POST['nivel_id'] ?? 0);
+            $tarifa_hora      = (float)($_POST['tarifa_hora'] ?? 0);
+
+            // Si seleccionó escribir una nueva materia
+            if ($materia_id_input === 'nueva' || empty($materia_id_input)) {
+                if (empty($nueva_materia) || strlen($nueva_materia) < 2) {
+                    set_flash('danger', 'Por favor escribe el nombre de la nueva materia o especialidad.');
+                    header('Location: ' . APP_URL . '/panel.php');
+                    exit;
+                }
+                // Verificar si ya existe en catálogo
+                $stmt_mat_chk = $pdo->prepare("SELECT `id` FROM `materias` WHERE LOWER(TRIM(`nombre`)) = LOWER(?) LIMIT 1");
+                $stmt_mat_chk->execute([$nueva_materia]);
+                $mat_row = $stmt_mat_chk->fetch();
+
+                if ($mat_row) {
+                    $materia_id = (int)$mat_row['id'];
+                } else {
+                    $stmt_mat_ins = $pdo->prepare("INSERT INTO `materias` (`nombre`) VALUES (?)");
+                    $stmt_mat_ins->execute([$nueva_materia]);
+                    $materia_id = (int)$pdo->lastInsertId();
+                }
+            } else {
+                $materia_id = (int)$materia_id_input;
+            }
+
+            if ($materia_id <= 0 || $nivel_id <= 0 || $tarifa_hora <= 0) {
+                set_flash('danger', 'Por favor selecciona la materia, el nivel educativo y una tarifa por hora válida (mayor a 0).');
+            } else {
+                try {
+                    $stmt_tm = $pdo->prepare("
+                        INSERT INTO `tutor_materia` (`tutor_id`, `materia_id`, `nivel_id`, `tarifa_hora`)
+                        VALUES (?, ?, ?, ?)
+                        ON DUPLICATE KEY UPDATE `tarifa_hora` = VALUES(`tarifa_hora`)
+                    ");
+                    $stmt_tm->execute([$usuario_id, $materia_id, $nivel_id, $tarifa_hora]);
+                    set_flash('success', '¡Especialidad y tarifa guardadas exitosamente!');
+                } catch (Exception $e) {
+                    error_log("[Tutor Materia Error]: " . $e->getMessage());
+                    set_flash('danger', 'Ocurrió un error al guardar la materia.');
+                }
+            }
+            header('Location: ' . APP_URL . '/panel.php');
+            exit;
+        }
+
+        // Eliminar especialidad/materia
+        if ($accion === 'eliminar_materia') {
+            $materia_id = (int)($_POST['materia_id'] ?? 0);
+            $nivel_id   = (int)($_POST['nivel_id'] ?? 0);
+
+            if ($materia_id > 0 && $nivel_id > 0) {
+                $stmt_del = $pdo->prepare("DELETE FROM `tutor_materia` WHERE `tutor_id` = ? AND `materia_id` = ? AND `nivel_id` = ?");
+                $stmt_del->execute([$usuario_id, $materia_id, $nivel_id]);
+                set_flash('success', 'Materia eliminada de tus especialidades.');
+            }
+            header('Location: ' . APP_URL . '/panel.php');
+            exit;
+        }
     }
 }
 
@@ -116,6 +180,8 @@ $sesiones_estudiante = [];
 $solicitudes_tutor   = [];
 $materias_tutor      = [];
 $horarios_tutor      = [];
+$materias_catalogo   = [];
+$niveles_catalogo    = [];
 
 try {
     if ($rol === 'estudiante') {
@@ -152,6 +218,10 @@ try {
         $stmt_mat = $pdo->prepare($sql_mat);
         $stmt_mat->execute([$usuario_id]);
         $materias_tutor = $stmt_mat->fetchAll();
+
+        // Catálogos para el formulario
+        $materias_catalogo = $pdo->query("SELECT * FROM `materias` ORDER BY `nombre` ASC")->fetchAll();
+        $niveles_catalogo  = $pdo->query("SELECT * FROM `niveles` ORDER BY `id` ASC")->fetchAll();
 
         // Disponibilidad horaria
         $stmt_disp = $pdo->prepare("SELECT * FROM `disponibilidad` WHERE `tutor_id` = ? ORDER BY FIELD(dia_semana, 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'), hora_inicio ASC");
@@ -455,26 +525,85 @@ require_once dirname(__DIR__) . '/includes/header.php';
         <!-- Materias Ofertadas -->
         <div class="col-lg-6">
             <div class="card card-custom p-4 border-0 shadow-sm h-100">
-                <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
-                    <i class="bi bi-book text-success"></i> Materias Ofertadas y Tarifas
-                </h5>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-book text-success"></i> Materias y Tarifas
+                    </h5>
+                    <span class="badge bg-success-subtle text-success"><?= count($materias_tutor) ?> asignada(s)</span>
+                </div>
+
+                <!-- Formulario Agregar Especialidad / Materia -->
+                <form action="<?= APP_URL ?>/panel.php" method="POST" class="mb-3 p-3 bg-light rounded-3" id="form-agregar-materia">
+                    <?= csrf_campo() ?>
+                    <input type="hidden" name="accion" value="agregar_materia">
+
+                    <div class="row g-2 align-items-end">
+                        <div class="col-sm-5">
+                            <label class="form-label small fw-medium mb-1">Materia</label>
+                            <select name="materia_id" id="panel-select-materia" class="form-select form-select-sm" required onchange="toggleNuevaMateriaPanel(this.value)">
+                                <option value="" disabled selected>Seleccionar...</option>
+                                <?php foreach ($materias_catalogo as $mc): ?>
+                                    <option value="<?= (int)$mc['id'] ?>"><?= e($mc['nombre']) ?></option>
+                                <?php endforeach; ?>
+                                <option value="nueva">+ Otra especialidad...</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label small fw-medium mb-1">Nivel</label>
+                            <select name="nivel_id" class="form-select form-select-sm" required>
+                                <?php foreach ($niveles_catalogo as $nc): ?>
+                                    <option value="<?= (int)$nc['id'] ?>"><?= e($nc['nombre']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="form-label small fw-medium mb-1">Tarifa/h</label>
+                            <input type="number" name="tarifa_hora" class="form-control form-control-sm" placeholder="$ COP" min="5000" step="1000" required>
+                        </div>
+
+                        <!-- Campo para escribir nueva materia si selecciona "+ Otra especialidad..." -->
+                        <div class="col-12 d-none" id="panel-input-nueva-materia">
+                            <label class="form-label small fw-medium mb-1 text-success">
+                                <i class="bi bi-pencil-square"></i> Nombre de la nueva materia o especialidad:
+                            </label>
+                            <input type="text" name="nueva_materia" class="form-control form-control-sm" placeholder="Ej. Robótica, Álgebra, Bioquímica, Python...">
+                        </div>
+
+                        <div class="col-12 text-end pt-1">
+                            <button type="submit" class="btn btn-sm btn-success px-3">
+                                <i class="bi bi-plus-circle me-1"></i> Guardar Especialidad
+                            </button>
+                        </div>
+                    </div>
+                </form>
 
                 <?php if (empty($materias_tutor)): ?>
-                    <p class="text-muted small mb-0">Aún no tienes materias asignadas.</p>
+                    <div class="p-3 bg-light rounded text-center text-muted small">
+                        <i class="bi bi-info-circle me-1 text-primary"></i> Aún no tienes materias asignadas. Registra las materias que impartes para que los estudiantes te encuentren en el buscador.
+                    </div>
                 <?php else: ?>
-                    <ul class="list-group list-group-flush mb-0">
+                    <div class="d-flex flex-column gap-2" style="max-height: 280px; overflow-y: auto;">
                         <?php foreach ($materias_tutor as $m): ?>
-                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div class="p-2 border rounded bg-white d-flex justify-content-between align-items-center">
                                 <div>
-                                    <div class="fw-semibold text-dark"><?= e($m['materia_nombre']) ?></div>
-                                    <small class="text-muted"><?= e($m['nivel_nombre']) ?></small>
+                                    <strong class="text-dark"><?= e($m['materia_nombre']) ?></strong>
+                                    <span class="badge bg-secondary-subtle text-secondary border ms-1"><?= e($m['nivel_nombre']) ?></span>
                                 </div>
-                                <span class="badge bg-success-subtle text-success fw-bold">
-                                    $<?= number_format($m['tarifa_hora'], 0, ',', '.') ?>/h
-                                </span>
-                            </li>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success fw-bold">
+                                        $<?= number_format($m['tarifa_hora'], 0, ',', '.') ?>/h
+                                    </span>
+                                    <form action="<?= APP_URL ?>/panel.php" method="POST" class="d-inline" onsubmit="return confirm('¿Seguro que deseas eliminar esta especialidad?');">
+                                        <?= csrf_campo() ?>
+                                        <input type="hidden" name="accion" value="eliminar_materia">
+                                        <input type="hidden" name="materia_id" value="<?= (int)$m['materia_id'] ?>">
+                                        <input type="hidden" name="nivel_id" value="<?= (int)$m['nivel_id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-1" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                            </div>
                         <?php endforeach; ?>
-                    </ul>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -542,6 +671,24 @@ require_once dirname(__DIR__) . '/includes/header.php';
             </div>
         </div>
     </div>
+    <script>
+    function toggleNuevaMateriaPanel(val) {
+        var box = document.getElementById('panel-input-nueva-materia');
+        if (!box) return;
+        if (val === 'nueva') {
+            box.classList.remove('d-none');
+            var inp = box.querySelector('input');
+            if (inp) {
+                inp.required = true;
+                inp.focus();
+            }
+        } else {
+            box.classList.add('d-none');
+            var inp = box.querySelector('input');
+            if (inp) inp.required = false;
+        }
+    }
+    </script>
 <?php endif; ?>
 
 <?php

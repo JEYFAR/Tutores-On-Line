@@ -146,6 +146,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . APP_URL . '/perfil.php#tab-archivos');
         exit;
     }
+
+    // ACCIÓN 5: Agregar o actualizar materia/especialidad (Solo Tutores)
+    if ($accion === 'agregar_materia') {
+        $materia_id_input = trim($_POST['materia_id'] ?? '');
+        $nueva_materia    = trim($_POST['nueva_materia'] ?? '');
+        $nivel_id         = (int)($_POST['nivel_id'] ?? 0);
+        $tarifa_hora      = (float)($_POST['tarifa_hora'] ?? 0);
+
+        // Si seleccionó escribir una nueva materia
+        if ($materia_id_input === 'nueva' || empty($materia_id_input)) {
+            if (empty($nueva_materia) || strlen($nueva_materia) < 2) {
+                set_flash('danger', 'Por favor escribe el nombre de la nueva materia o especialidad.');
+                header('Location: ' . APP_URL . '/perfil.php#tab-materias');
+                exit;
+            }
+            // Verificar si ya existe en catálogo
+            $stmt_mat_chk = $pdo->prepare("SELECT `id` FROM `materias` WHERE LOWER(TRIM(`nombre`)) = LOWER(?) LIMIT 1");
+            $stmt_mat_chk->execute([$nueva_materia]);
+            $mat_row = $stmt_mat_chk->fetch();
+
+            if ($mat_row) {
+                $materia_id = (int)$mat_row['id'];
+            } else {
+                $stmt_mat_ins = $pdo->prepare("INSERT INTO `materias` (`nombre`) VALUES (?)");
+                $stmt_mat_ins->execute([$nueva_materia]);
+                $materia_id = (int)$pdo->lastInsertId();
+            }
+        } else {
+            $materia_id = (int)$materia_id_input;
+        }
+
+        if ($materia_id <= 0 || $nivel_id <= 0 || $tarifa_hora <= 0) {
+            set_flash('danger', 'Por favor selecciona la materia, el nivel educativo y una tarifa por hora válida (mayor a 0).');
+        } else {
+            try {
+                $stmt_tm = $pdo->prepare("
+                    INSERT INTO `tutor_materia` (`tutor_id`, `materia_id`, `nivel_id`, `tarifa_hora`)
+                    VALUES (?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE `tarifa_hora` = VALUES(`tarifa_hora`)
+                ");
+                $stmt_tm->execute([$usuario_id, $materia_id, $nivel_id, $tarifa_hora]);
+                set_flash('success', '¡Especialidad y tarifa agregadas exitosamente a tu perfil!');
+            } catch (Exception $e) {
+                error_log("[Perfil Materia Error]: " . $e->getMessage());
+                set_flash('danger', 'Ocurrió un error al guardar la especialidad.');
+            }
+        }
+        header('Location: ' . APP_URL . '/perfil.php#tab-materias');
+        exit;
+    }
+
+    // ACCIÓN 6: Eliminar materia/especialidad (Solo Tutores)
+    if ($accion === 'eliminar_materia') {
+        $materia_id = (int)($_POST['materia_id'] ?? 0);
+        $nivel_id   = (int)($_POST['nivel_id'] ?? 0);
+
+        if ($materia_id > 0 && $nivel_id > 0) {
+            $stmt_del = $pdo->prepare("DELETE FROM `tutor_materia` WHERE `tutor_id` = ? AND `materia_id` = ? AND `nivel_id` = ?");
+            $stmt_del->execute([$usuario_id, $materia_id, $nivel_id]);
+            set_flash('success', 'Especialidad eliminada correctamente.');
+        }
+        header('Location: ' . APP_URL . '/perfil.php#tab-materias');
+        exit;
+    }
 }
 
 // =============================================================================
@@ -187,6 +251,26 @@ $es_dueno = (!empty($_SESSION['usuario_id']) && (int)$_SESSION['usuario_id'] ===
 // CASO A: MODO PRIVADO (MI PERFIL - Separado por apartados con selector lateral)
 if ($es_mi_perfil && $es_dueno):
     $archivos = listar_archivos_usuario($perfil_id);
+    $materias_tutor = [];
+    $materias_catalogo = [];
+    $niveles_catalogo = [];
+
+    if ($perfil_usuario['rol'] === 'tutor') {
+        $stmt_mat = $pdo->prepare("
+            SELECT tm.*, m.nombre AS materia_nombre, n.nombre AS nivel_nombre
+            FROM `tutor_materia` tm
+            INNER JOIN `materias` m ON m.id = tm.materia_id
+            INNER JOIN `niveles` n ON n.id = tm.nivel_id
+            WHERE tm.tutor_id = ?
+            ORDER BY m.nombre ASC
+        ");
+        $stmt_mat->execute([$perfil_id]);
+        $materias_tutor = $stmt_mat->fetchAll();
+
+        $materias_catalogo = $pdo->query("SELECT * FROM `materias` ORDER BY `nombre` ASC")->fetchAll();
+        $niveles_catalogo  = $pdo->query("SELECT * FROM `niveles` ORDER BY `id` ASC")->fetchAll();
+    }
+
     $titulo_pagina = 'Mi Perfil';
     require_once dirname(__DIR__) . '/includes/header.php';
 ?>
@@ -268,6 +352,17 @@ if ($es_mi_perfil && $es_dueno):
                         </div>
                     </button>
 
+                    <?php if ($perfil_usuario['rol'] === 'tutor'): ?>
+                        <!-- Apartado Especialidades (Solo Tutores) -->
+                        <button class="nav-link text-start d-flex align-items-center gap-3 p-3" id="tab-btn-materias" data-bs-toggle="pill" data-bs-target="#tab-materias" type="button" role="tab" aria-controls="tab-materias" aria-selected="false">
+                            <i class="bi bi-mortarboard fs-4 text-success"></i>
+                            <div class="lh-sm">
+                                <strong class="d-block text-dark">Especialidades y Tarifas</strong>
+                                <small class="text-muted" style="font-size: 0.78rem;">Materias que impartes</small>
+                            </div>
+                        </button>
+                    <?php endif; ?>
+
                     <!-- Apartado 3: Foto y Documentos -->
                     <button class="nav-link text-start d-flex align-items-center gap-3 p-3" id="tab-btn-archivos" data-bs-toggle="pill" data-bs-target="#tab-archivos" type="button" role="tab" aria-controls="tab-archivos" aria-selected="false">
                         <i class="bi bi-cloud-arrow-up fs-4 text-primary"></i>
@@ -343,6 +438,124 @@ if ($es_mi_perfil && $es_dueno):
                         </form>
                     </div>
                 </div>
+
+                <?php if ($perfil_usuario['rol'] === 'tutor'): ?>
+                    <!-- ========================================================= -->
+                    <!-- APARTADO ESPECIAL: ESPECIALIDADES Y TARIFAS (TUTORES)     -->
+                    <!-- ========================================================= -->
+                    <div class="tab-pane fade" id="tab-materias" role="tabpanel" aria-labelledby="tab-btn-materias" tabindex="0">
+                        <div class="card card-custom p-4 border-0 shadow-sm mb-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-mortarboard fs-4 text-success"></i>
+                                    <h4 class="fw-bold text-dark mb-0">Mis Especialidades y Tarifas</h4>
+                                </div>
+                                <span class="badge bg-success-subtle text-success"><?= count($materias_tutor) ?> asignada(s)</span>
+                            </div>
+                            <p class="text-muted small mb-4">
+                                Configura las materias o asignaturas que enseñas, el nivel educativo y tu tarifa por hora en pesos colombianos (COP).
+                                <strong>Estas especialidades son las que indexa el buscador</strong> para que los estudiantes puedan contactarte.
+                            </p>
+
+                            <!-- Formulario Agregar Especialidad -->
+                            <form action="<?= APP_URL ?>/perfil.php" method="POST" class="p-3 bg-light rounded-3 mb-4">
+                                <?= csrf_campo() ?>
+                                <input type="hidden" name="accion" value="agregar_materia">
+
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-5">
+                                        <label class="form-label small fw-medium mb-1">Materia o Especialidad</label>
+                                        <select name="materia_id" id="perfil-select-materia" class="form-select form-select-sm" required onchange="toggleNuevaMateriaPerfil(this.value)">
+                                            <option value="" disabled selected>Selecciona una materia...</option>
+                                            <?php foreach ($materias_catalogo as $mc): ?>
+                                                <option value="<?= (int)$mc['id'] ?>"><?= e($mc['nombre']) ?></option>
+                                            <?php endforeach; ?>
+                                            <option value="nueva">+ Otra especialidad no listada...</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-medium mb-1">Nivel Educativo</label>
+                                        <select name="nivel_id" class="form-select form-select-sm" required>
+                                            <?php foreach ($niveles_catalogo as $nc): ?>
+                                                <option value="<?= (int)$nc['id'] ?>"><?= e($nc['nombre']) ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-medium mb-1">Tarifa por Hora (COP)</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" name="tarifa_hora" class="form-control" placeholder="Ej. 35000" min="5000" step="1000" required>
+                                        </div>
+                                    </div>
+
+                                    <!-- Campo para nueva materia -->
+                                    <div class="col-12 d-none" id="perfil-input-nueva-materia">
+                                        <label class="form-label small fw-medium mb-1 text-success">
+                                            <i class="bi bi-pencil-square"></i> Nombre de la nueva especialidad:
+                                        </label>
+                                        <input type="text" name="nueva_materia" class="form-control form-control-sm" placeholder="Ej. Robótica Educativa, Bioquímica Médica, Francés, Programación...">
+                                    </div>
+
+                                    <div class="col-12 text-end">
+                                        <button type="submit" class="btn btn-sm btn-success px-4">
+                                            <i class="bi bi-plus-circle me-1"></i> Agregar Especialidad
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <h5 class="fw-bold text-dark mb-3">Materias Actualmente Impartidas</h5>
+                            <?php if (empty($materias_tutor)): ?>
+                                <div class="alert alert-warning d-flex align-items-center gap-2 mb-0" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                                    <div>
+                                        <strong>No has asignado materias aún.</strong> El buscador no podrá sugerirte a estudiantes hasta que agregues al menos una especialidad.
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Materia / Especialidad</th>
+                                                <th>Nivel</th>
+                                                <th>Tarifa por Hora</th>
+                                                <th class="text-end">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($materias_tutor as $m): ?>
+                                                <tr>
+                                                    <td>
+                                                        <strong class="text-dark"><?= e($m['materia_nombre']) ?></strong>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-secondary-subtle text-secondary border"><?= e($m['nivel_nombre']) ?></span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="fw-bold text-success">$<?= number_format($m['tarifa_hora'], 0, ',', '.') ?> COP</span>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <form action="<?= APP_URL ?>/perfil.php" method="POST" class="d-inline" onsubmit="return confirm('¿Seguro que deseas eliminar esta especialidad de tu perfil?');">
+                                                            <?= csrf_campo() ?>
+                                                            <input type="hidden" name="accion" value="eliminar_materia">
+                                                            <input type="hidden" name="materia_id" value="<?= (int)$m['materia_id'] ?>">
+                                                            <input type="hidden" name="nivel_id" value="<?= (int)$m['nivel_id'] ?>">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Especialidad">
+                                                                <i class="bi bi-trash"></i> Eliminar
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
                 <!-- ========================================================= -->
                 <!-- APARTADO 2: SEGURIDAD Y CONTRASEÑA                        -->
@@ -554,6 +767,23 @@ if ($es_mi_perfil && $es_dueno):
             });
         });
     });
+
+    function toggleNuevaMateriaPerfil(val) {
+        var box = document.getElementById("perfil-input-nueva-materia");
+        if (!box) return;
+        if (val === "nueva") {
+            box.classList.remove("d-none");
+            var inp = box.querySelector("input");
+            if (inp) {
+                inp.required = true;
+                inp.focus();
+            }
+        } else {
+            box.classList.add("d-none");
+            var inp = box.querySelector("input");
+            if (inp) inp.required = false;
+        }
+    }
     </script>
     ';
     ?>

@@ -153,18 +153,23 @@ require_once dirname(__DIR__) . '/includes/header.php';
                 </div>
 
                 <div class="mb-3 flex-grow-1">
-                    <div class="small fw-semibold text-muted mb-1">Materias:</div>
+                    <div class="small fw-semibold text-muted mb-1">Especialidades:</div>
                     <div class="small text-secondary">{{ tutor.materias }}</div>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-auto">
                     <div>
-                        <small class="text-muted d-block">Tarifa desde</small>
-                        <span class="fw-bold text-primary fs-5">${{ formatoMoneda(tutor.tarifa_min) }}</span>
-                        <small class="text-muted">/h</small>
+                        <small class="text-muted d-block">Tarifa por hora</small>
+                        <span v-if="tutor.tarifa_min > 0">
+                            <span class="fw-bold text-primary fs-5">${{ formatoMoneda(tutor.tarifa_min) }}</span>
+                            <small class="text-muted">/h</small>
+                        </span>
+                        <span v-else class="badge bg-light text-secondary border fw-normal py-1 px-2">
+                            A convenir
+                        </span>
                     </div>
                     <a :href="tutor.perfil_url" class="btn btn-sm btn-primary-custom">
-                        Ver Perfil y Reservar
+                        Ver Perfil
                     </a>
                 </div>
             </div>
