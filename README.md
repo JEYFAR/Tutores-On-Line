@@ -62,7 +62,10 @@ tutoresonline/
 │   ├── buscar_tutores.php  # Filtros de profesores
 │   ├── reservar.php        # Creación de sesiones de tutoría
 │   ├── solicitudes.php     # Aceptación/rechazo de clases
-│   └── disponibilidad.php  # Horarios semanales del tutor
+│   ├── disponibilidad.php  # Horarios semanales del tutor
+│   ├── chat_conversaciones.php # Listado y creación de conversaciones
+│   ├── chat_mensajes.php   # Polling de mensajes nuevos
+│   └── chat_enviar.php     # Envío validado y seguro de mensajes
 ├── logs/                   # Registro de errores y correos simulados
 │   ├── .htaccess           # Bloqueo de acceso HTTP
 │   └── mail.log            # Enlaces de activación y recuperación de contraseña
@@ -76,6 +79,7 @@ tutoresonline/
     ├── buscar.php          # Buscador reactivo de tutores con Vue 3
     ├── panel.php           # Dashboard universal adaptativo (estudiante y tutor)
     ├── perfil.php          # Perfil universal (gestión personal, archivos y vista pública)
+    ├── chat.php            # Mensajería interna en tiempo real con Vue 3 y polling
     ├── reservar.php        # Formulario de agendamiento
     ├── css/                # Estilos personalizados
     └── uploads/            # Archivos subidos protegidos contra ejecución PHP

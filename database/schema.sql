@@ -13,6 +13,8 @@ USE `tutoresonline`;
 -- Desactivar temporalmente revisión de llaves foráneas para permitir reinicio limpio
 SET FOREIGN_KEY_CHECKS = 0;
 
+DROP TABLE IF EXISTS `mensajes`;
+DROP TABLE IF EXISTS `conversaciones`;
 DROP TABLE IF EXISTS `calificaciones`;
 DROP TABLE IF EXISTS `sesiones`;
 DROP TABLE IF EXISTS `disponibilidad`;
@@ -248,3 +250,49 @@ CREATE TABLE `intentos_login` (
   `creado_en` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX `idx_intentos_correo_ip_fecha` (`correo`, `ip`, `creado_en`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- 13. Tabla: conversaciones
+-- Hilo de chat directo entre un estudiante y un tutor (opcionalmente atado a sesión).
+-- -----------------------------------------------------------------------------
+CREATE TABLE `conversaciones` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `estudiante_id` INT UNSIGNED NOT NULL,
+  `tutor_id` INT UNSIGNED NOT NULL,
+  `sesion_id` INT UNSIGNED NULL,
+  `actualizado_en` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `creado_en` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `uq_conversacion_usuarios` (`estudiante_id`, `tutor_id`),
+  INDEX `idx_conv_actualizado` (`actualizado_en`),
+  CONSTRAINT `fk_conv_estudiante`
+    FOREIGN KEY (`estudiante_id`) REFERENCES `usuarios` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_conv_tutor`
+    FOREIGN KEY (`tutor_id`) REFERENCES `usuarios` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_conv_sesion`
+    FOREIGN KEY (`sesion_id`) REFERENCES `sesiones` (`id`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------------------------------
+-- 14. Tabla: mensajes
+-- Mensajes intercambiados en cada conversación con control de lectura y timestamp.
+-- -----------------------------------------------------------------------------
+CREATE TABLE `mensajes` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `conversacion_id` INT UNSIGNED NOT NULL,
+  `emisor_id` INT UNSIGNED NOT NULL,
+  `texto` TEXT NOT NULL,
+  `leido` TINYINT(1) NOT NULL DEFAULT 0,
+  `creado_en` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX `idx_msg_conv_id` (`conversacion_id`, `id`),
+  INDEX `idx_msg_leido` (`conversacion_id`, `leido`),
+  CONSTRAINT `fk_msg_conversacion`
+    FOREIGN KEY (`conversacion_id`) REFERENCES `conversaciones` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_msg_emisor`
+    FOREIGN KEY (`emisor_id`) REFERENCES `usuarios` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

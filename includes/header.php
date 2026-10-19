@@ -76,6 +76,11 @@ $rol_usuario = $_SESSION['rol'] ?? '';
                             <i class="bi bi-speedometer2 me-1"></i> Mi Panel
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= $pagina_actual === 'chat.php' ? 'active fw-semibold text-primary' : '' ?>" href="<?= APP_URL ?>/chat.php">
+                            <i class="bi bi-chat-dots me-1"></i> Mensajes
+                        </a>
+                    </li>
                 <?php endif; ?>
             </ul>
 
@@ -104,6 +109,11 @@ $rol_usuario = $_SESSION['rol'] ?? '';
                             <li>
                                 <a class="dropdown-item <?= $pagina_actual === 'panel.php' ? 'active fw-semibold' : '' ?>" href="<?= APP_URL ?>/panel.php">
                                     <i class="bi bi-speedometer2 me-2"></i> Mi Panel
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item <?= $pagina_actual === 'chat.php' ? 'active fw-semibold' : '' ?>" href="<?= APP_URL ?>/chat.php">
+                                    <i class="bi bi-chat-dots me-2"></i> Mis Mensajes
                                 </a>
                             </li>
                             <?php if ($rol_usuario === 'tutor'): ?>

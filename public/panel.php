@@ -183,7 +183,10 @@ require_once dirname(__DIR__) . '/includes/header.php';
                         <?php endif; ?>
                     </p>
                 </div>
-                <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex flex-wrap gap-2 justify-content-md-end">
+                <div class="col-md-6 text-md-end mt-3 mt-md-0 d-flex flex-wrap gap-2 justify-content-md-end">
+                    <a href="<?= APP_URL ?>/chat.php" class="btn btn-light text-primary fw-semibold shadow-sm">
+                        <i class="bi bi-chat-dots me-1"></i> Mensajes
+                    </a>
                     <a href="<?= APP_URL ?>/perfil.php" class="btn btn-light text-dark fw-semibold shadow-sm">
                         <i class="bi bi-person-gear me-1"></i> Mi Perfil
                     </a>
@@ -245,7 +248,12 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                     <tr>
                                         <td class="fw-semibold text-dark"><?= e($s['materia_nombre']) ?></td>
                                         <td>
-                                            <div class="fw-medium"><?= e($s['tutor_nombre']) ?></div>
+                                            <div class="fw-medium d-flex align-items-center gap-2">
+                                                <?= e($s['tutor_nombre']) ?>
+                                                <a href="<?= APP_URL ?>/chat.php?con=<?= (int)$s['tutor_id'] ?>" class="btn btn-sm btn-outline-primary py-0 px-1" title="Chatear con el tutor">
+                                                    <i class="bi bi-chat-dots"></i>
+                                                </a>
+                                            </div>
                                             <small class="text-muted"><?= e($s['tutor_correo']) ?></small>
                                         </td>
                                         <td>
@@ -372,7 +380,12 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                 <?php foreach ($solicitudes_tutor as $sol): ?>
                                     <tr>
                                         <td>
-                                            <div class="fw-semibold text-dark"><?= e($sol['estudiante_nombre']) ?></div>
+                                            <div class="fw-semibold text-dark d-flex align-items-center gap-2">
+                                                <?= e($sol['estudiante_nombre']) ?>
+                                                <a href="<?= APP_URL ?>/chat.php?con=<?= (int)$sol['estudiante_id'] ?>" class="btn btn-sm btn-outline-primary py-0 px-1" title="Chatear con el estudiante">
+                                                    <i class="bi bi-chat-dots"></i>
+                                                </a>
+                                            </div>
                                             <small class="text-muted"><?= e($sol['estudiante_correo']) ?></small>
                                         </td>
                                         <td class="fw-medium"><?= e($sol['materia_nombre']) ?></td>

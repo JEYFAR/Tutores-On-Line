@@ -663,6 +663,9 @@ else:
                             <a href="<?= APP_URL ?>/reservar.php?tutor_id=<?= (int)$perfil_usuario['id'] ?>" class="btn btn-primary-custom py-2">
                                 <i class="bi bi-calendar-plus me-1"></i> Reservar Tutoría
                             </a>
+                            <a href="<?= APP_URL ?>/chat.php?con=<?= (int)$perfil_usuario['id'] ?>" class="btn btn-outline-primary py-2">
+                                <i class="bi bi-chat-dots me-1"></i> Enviar Mensaje
+                            </a>
                         <?php endif; ?>
                         <a href="<?= APP_URL ?>/buscar.php" class="btn btn-outline-secondary btn-sm">
                             <i class="bi bi-arrow-left me-1"></i> Explorar Tutores
