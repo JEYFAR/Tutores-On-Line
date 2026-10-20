@@ -13,6 +13,72 @@ require_once __DIR__ . '/conexion.php';
 require_once __DIR__ . '/seguridad.php';
 
 /**
+ * Detecta el tipo MIME real inspeccionando el contenido binario.
+ * Utiliza finfo si está disponible en PHP, y aplica fallbacks múltiples
+ * (mime_content_type, getimagesize y Magic Bytes de cabecera binaria)
+ * para garantizar compatibilidad universal sin fallar si la extensión fileinfo está inactiva.
+ *
+ * @param string $ruta_temporal
+ * @param string $extension
+ * @return string|null
+ */
+function detectar_mime_seguro($ruta_temporal, $extension = '')
+{
+    // 1. Método finfo (si la extensión fileinfo está habilitada en PHP)
+    if (function_exists('finfo_open')) {
+        $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo) {
+            $mime = @finfo_file($finfo, $ruta_temporal);
+            @finfo_close($finfo);
+            if (!empty($mime) && $mime !== 'application/octet-stream') {
+                return $mime;
+            }
+        }
+    }
+
+    // 2. Método mime_content_type
+    if (function_exists('mime_content_type')) {
+        $mime = @mime_content_type($ruta_temporal);
+        if (!empty($mime) && $mime !== 'application/octet-stream') {
+            return $mime;
+        }
+    }
+
+    // 3. Método getimagesize para imágenes
+    $ext = strtolower($extension);
+    if (in_array($ext, ['jpg', 'jpeg', 'png'], true) && function_exists('getimagesize')) {
+        $info = @getimagesize($ruta_temporal);
+        if ($info && !empty($info['mime'])) {
+            return $info['mime'];
+        }
+    }
+
+    // 4. Fallback 100% nativo por Magic Bytes (cabecera binaria directa)
+    $fp = @fopen($ruta_temporal, 'rb');
+    if ($fp) {
+        $bytes = @fread($fp, 8);
+        @fclose($fp);
+
+        if ($bytes !== false && strlen($bytes) >= 4) {
+            // PDF: comienza con %PDF
+            if (substr($bytes, 0, 4) === '%PDF') {
+                return 'application/pdf';
+            }
+            // PNG: comienza con \x89PNG
+            if (substr($bytes, 0, 4) === "\x89PNG") {
+                return 'image/png';
+            }
+            // JPEG: comienza con \xFF\xD8
+            if (substr($bytes, 0, 2) === "\xFF\xD8") {
+                return 'image/jpeg';
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
  * Valida y guarda un archivo subido por un usuario
  *
  * @param array $archivo Array proveniente de $_FILES['nombre_campo']
@@ -68,12 +134,10 @@ function guardar_archivo_subido($archivo, $usuario_id, $tipo)
         return ['exito' => false, 'mensaje' => 'Extensión no permitida. Formatos válidos: ' . implode(', ', $extensiones_permitidas)];
     }
 
-    // 5. Validar tipo MIME REAL inspeccionando el contenido binario (finfo)
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mime_real = finfo_file($finfo, $ruta_temporal);
-    finfo_close($finfo);
+    // 5. Validar tipo MIME REAL inspeccionando el contenido binario
+    $mime_real = detectar_mime_seguro($ruta_temporal, $extension);
 
-    if (!in_array($mime_real, $mimes_permitidos, true)) {
+    if (empty($mime_real) || !in_array($mime_real, $mimes_permitidos, true)) {
         return ['exito' => false, 'mensaje' => 'El contenido real del archivo no corresponde a un formato seguro válido.'];
     }
 
