@@ -10,10 +10,9 @@
 require_once dirname(__DIR__) . '/includes/auth.php';
 require_once dirname(__DIR__) . '/includes/oauth_google.php';
 
-// Si ya tiene sesión activa, redirigir a su panel correspondiente
+// Si ya tiene sesión activa, redirigir a su panel
 if (usuario_autenticado()) {
-    $destino = ($_SESSION['rol'] === 'tutor') ? '/panel_tutor.php' : '/panel_estudiante.php';
-    header('Location: ' . APP_URL . $destino);
+    header('Location: ' . APP_URL . '/panel.php');
     exit;
 }
 

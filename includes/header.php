@@ -50,7 +50,7 @@ $rol_usuario = $_SESSION['rol'] ?? '';
 <!-- Barra de Navegación Principal -->
 <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
     <div class="container">
-        <a class="navbar-brand navbar-brand-custom d-flex align-items-center gap-2" href="<?= APP_URL ?>/index.php">
+        <a class="navbar-brand navbar-brand-custom d-flex align-items-center gap-2" href="<?= $usuario_autenticado ? APP_URL . '/panel.php' : APP_URL . '/index.php' ?>">
             <i class="bi bi-mortarboard-fill fs-4"></i>
             <span>TutoresOnLine</span>
         </a>
@@ -61,7 +61,7 @@ $rol_usuario = $_SESSION['rol'] ?? '';
         <div class="collapse navbar-collapse" id="navbarContenido">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link <?= $pagina_actual === 'index.php' ? 'active fw-semibold text-primary' : '' ?>" href="<?= APP_URL ?>/index.php">
+                    <a class="nav-link <?= ($pagina_actual === 'index.php' || $pagina_actual === 'panel.php') ? 'active fw-semibold text-primary' : '' ?>" href="<?= $usuario_autenticado ? APP_URL . '/panel.php' : APP_URL . '/index.php' ?>">
                         <i class="bi bi-house-door me-1"></i> Inicio
                     </a>
                 </li>
@@ -71,11 +71,6 @@ $rol_usuario = $_SESSION['rol'] ?? '';
                     </a>
                 </li>
                 <?php if ($usuario_autenticado): ?>
-                    <li class="nav-item">
-                        <a class="nav-link <?= $pagina_actual === 'panel.php' ? 'active fw-semibold text-primary' : '' ?>" href="<?= APP_URL ?>/panel.php">
-                            <i class="bi bi-speedometer2 me-1"></i> Mi Panel
-                        </a>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link <?= $pagina_actual === 'chat.php' ? 'active fw-semibold text-primary' : '' ?>" href="<?= APP_URL ?>/chat.php">
                             <i class="bi bi-chat-dots me-1"></i> Mensajes
@@ -104,11 +99,6 @@ $rol_usuario = $_SESSION['rol'] ?? '';
                             <li>
                                 <a class="dropdown-item <?= $pagina_actual === 'perfil.php' ? 'active fw-semibold' : '' ?>" href="<?= APP_URL ?>/perfil.php">
                                     <i class="bi bi-person-circle me-2"></i> Mi Perfil
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item <?= $pagina_actual === 'panel.php' ? 'active fw-semibold' : '' ?>" href="<?= APP_URL ?>/panel.php">
-                                    <i class="bi bi-speedometer2 me-2"></i> Mi Panel
                                 </a>
                             </li>
                             <li>
