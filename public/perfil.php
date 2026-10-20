@@ -210,6 +210,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . APP_URL . '/perfil.php#tab-materias');
         exit;
     }
+
+    // ACCIÓN 7: Calificar a un tutor (Solo para Estudiantes)
+    if ($accion === 'calificar_tutor') {
+        $tutor_id   = (int)($_POST['tutor_id'] ?? 0);
+        $puntaje    = (int)($_POST['puntaje'] ?? 5);
+        $comentario = trim($_POST['comentario'] ?? '');
+
+        if (($_SESSION['rol'] ?? '') !== 'estudiante') {
+            set_flash('danger', 'Solo los estudiantes pueden calificar y dejar opiniones a los tutores.');
+            header('Location: ' . APP_URL . '/perfil.php?id=' . $tutor_id);
+            exit;
+        }
+
+        if ($tutor_id <= 0 || $tutor_id === $usuario_id) {
+            set_flash('danger', 'No puedes calificar a tu propio perfil.');
+            header('Location: ' . APP_URL . '/buscar.php');
+            exit;
+        }
+
+        if ($puntaje < 1 || $puntaje > 5) {
+            $puntaje = 5;
+        }
+
+        try {
+            // Verificar que el usuario calificado sea tutor
+            $stmt_t_chk = $pdo->prepare("SELECT `id`, `nombre` FROM `usuarios` WHERE `id` = ? AND `rol` = 'tutor' LIMIT 1");
+            $stmt_t_chk->execute([$tutor_id]);
+            $tutor_dest = $stmt_t_chk->fetch();
+
+            if (!$tutor_dest) {
+                set_flash('danger', 'El usuario seleccionado no es un tutor válido.');
+                header('Location: ' . APP_URL . '/buscar.php');
+                exit;
+            }
+
+            $stmt_cal = $pdo->prepare("
+                INSERT INTO `calificaciones` (`estudiante_id`, `tutor_id`, `puntaje`, `comentario`, `creado_en`)
+                VALUES (?, ?, ?, ?, NOW())
+                ON DUPLICATE KEY UPDATE
+                    `puntaje` = VALUES(`puntaje`),
+                    `comentario` = VALUES(`comentario`),
+                    `creado_en` = NOW()
+            ");
+            $stmt_cal->execute([$usuario_id, $tutor_id, $puntaje, $comentario]);
+
+            set_flash('success', '¡Tu calificación de ' . $puntaje . ' estrella(s) ha sido publicada exitosamente!');
+        } catch (Exception $e) {
+            error_log("[Perfil Calificar Error]: " . $e->getMessage());
+            set_flash('danger', 'Ocurrió un error al registrar tu calificación.');
+        }
+
+        header('Location: ' . APP_URL . '/perfil.php?id=' . $tutor_id . '#opiniones');
+        exit;
+    }
 }
 
 // =============================================================================
@@ -828,11 +882,19 @@ else:
         $stmt_calif->execute([$perfil_id]);
         $calificaciones = $stmt_calif->fetchAll();
 
-        $stmt_prom = $pdo->prepare("SELECT COALESCE(ROUND(AVG(puntaje), 1), 5.0) AS promedio, COUNT(*) AS total FROM `calificaciones` WHERE `tutor_id` = ?");
+        $stmt_prom = $pdo->prepare("SELECT COALESCE(ROUND(AVG(puntaje), 1), 0.0) AS promedio, COUNT(*) AS total FROM `calificaciones` WHERE `tutor_id` = ?");
         $stmt_prom->execute([$perfil_id]);
         $rating_info = $stmt_prom->fetch();
         $promedio = (float)$rating_info['promedio'];
         $total_resenas = (int)$rating_info['total'];
+
+        // Consultar si el estudiante logueado ya calificó a este tutor
+        $mi_calificacion = null;
+        if (!empty($_SESSION['usuario_id']) && ($_SESSION['rol'] ?? '') === 'estudiante') {
+            $stmt_mi_c = $pdo->prepare("SELECT * FROM `calificaciones` WHERE `estudiante_id` = ? AND `tutor_id` = ? LIMIT 1");
+            $stmt_mi_c->execute([(int)$_SESSION['usuario_id'], $perfil_id]);
+            $mi_calificacion = $stmt_mi_c->fetch();
+        }
 
         $stmt_cv = $pdo->prepare("SELECT `nombre_guardado`, `nombre_original` FROM `archivos` WHERE `usuario_id` = ? AND `tipo` = 'hoja_vida' ORDER BY `subido_en` DESC LIMIT 1");
         $stmt_cv->execute([$perfil_id]);
@@ -865,13 +927,20 @@ else:
 
                 <?php if ($perfil_usuario['rol'] === 'tutor'): ?>
                     <div class="mb-3">
-                        <span class="estrellas-calificacion">
-                            <?php for ($i = 1; $i <= 5; $i++): ?>
-                                <i class="bi <?= $i <= round($promedio) ? 'bi-star-fill text-warning' : 'bi-star text-secondary' ?>"></i>
-                            <?php endfor; ?>
-                            <span class="fw-bold text-dark ms-1"><?= number_format($promedio, 1) ?></span>
-                        </span>
-                        <div class="small text-muted">(<?= $total_resenas ?> reseñas)</div>
+                        <?php if ($total_resenas > 0): ?>
+                            <span class="estrellas-calificacion">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <i class="bi <?= $i <= round($promedio) ? 'bi-star-fill text-warning' : 'bi-star text-secondary opacity-50' ?>"></i>
+                                <?php endfor; ?>
+                                <span class="fw-bold text-dark ms-1"><?= number_format($promedio, 1) ?></span>
+                            </span>
+                            <div class="small text-muted">(<?= $total_resenas ?> <?= $total_resenas === 1 ? 'reseña' : 'reseñas' ?>)</div>
+                        <?php else: ?>
+                            <span class="badge bg-light text-secondary border px-3 py-2 fw-normal">
+                                <i class="bi bi-star me-1 text-warning"></i> Sin calificaciones aún
+                            </span>
+                            <div class="small text-muted mt-1">(0 reseñas recibidas)</div>
+                        <?php endif; ?>
                     </div>
 
                     <?php if ($hoja_vida): ?>
@@ -979,15 +1048,75 @@ else:
                 </div>
 
                 <!-- 3. Calificaciones y Opiniones -->
-                <div class="card card-custom p-4 border-0 shadow-sm">
-                    <h4 class="fw-bold mb-3 d-flex align-items-center gap-2">
-                        <i class="bi bi-chat-quote text-primary"></i> Opiniones de Estudiantes
-                    </h4>
+                <div class="card card-custom p-4 border-0 shadow-sm" id="opiniones">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-chat-quote text-primary"></i> Opiniones y Calificaciones
+                        </h4>
+                        <span class="badge bg-primary-subtle text-primary"><?= $total_resenas ?> reseña(s)</span>
+                    </div>
 
+                    <!-- FORMULARIO PARA CALIFICAR AL TUTOR -->
+                    <?php if (!empty($_SESSION['usuario_id'])): ?>
+                        <?php if (($_SESSION['rol'] ?? '') === 'estudiante' && (int)$_SESSION['usuario_id'] !== (int)$perfil_usuario['id']): ?>
+                            <div class="p-3 bg-light rounded-3 mb-4 border">
+                                <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    <?= $mi_calificacion ? 'Modificar mi calificación para ' . e($perfil_usuario['nombre']) : 'Calificar a ' . e($perfil_usuario['nombre']) ?>
+                                </h6>
+                                <p class="text-muted small mb-3">
+                                    <?= $mi_calificacion ? 'Ya calificaste a este profesor. Puedes actualizar tu puntuación y opinión cuando lo desees.' : 'Comparte tu experiencia para ayudar a otros estudiantes a conocer a este tutor.' ?>
+                                </p>
+
+                                <form action="<?= APP_URL ?>/perfil.php" method="POST">
+                                    <?= csrf_campo() ?>
+                                    <input type="hidden" name="accion" value="calificar_tutor">
+                                    <input type="hidden" name="tutor_id" value="<?= (int)$perfil_usuario['id'] ?>">
+
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-sm-5">
+                                            <label class="form-label small fw-medium text-dark mb-1">Puntuación:</label>
+                                            <select name="puntaje" class="form-select form-select-sm fw-bold text-dark" required>
+                                                <option value="5" <?= ($mi_calificacion['puntaje'] ?? 5) == 5 ? 'selected' : '' ?>>⭐⭐⭐⭐⭐ (5 - Excelente)</option>
+                                                <option value="4" <?= ($mi_calificacion['puntaje'] ?? '') == 4 ? 'selected' : '' ?>>⭐⭐⭐⭐☆ (4 - Muy bueno)</option>
+                                                <option value="3" <?= ($mi_calificacion['puntaje'] ?? '') == 3 ? 'selected' : '' ?>>⭐⭐⭐☆☆ (3 - Aceptable)</option>
+                                                <option value="2" <?= ($mi_calificacion['puntaje'] ?? '') == 2 ? 'selected' : '' ?>>⭐⭐☆☆☆ (2 - Regular)</option>
+                                                <option value="1" <?= ($mi_calificacion['puntaje'] ?? '') == 1 ? 'selected' : '' ?>>⭐☆☆☆☆ (1 - Insuficiente)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="comentario_calif" class="form-label small fw-medium text-dark mb-1">Tu Opinión o Reseña (Opcional):</label>
+                                        <textarea name="comentario" id="comentario_calif" rows="2" class="form-control form-control-sm" placeholder="Ej. Muy buen tutor, paciente y domina ampliamente la materia..."><?= e($mi_calificacion['comentario'] ?? '') ?></textarea>
+                                    </div>
+
+                                    <div class="text-end">
+                                        <button type="submit" class="btn btn-primary-custom btn-sm px-4">
+                                            <i class="bi bi-star me-1"></i> <?= $mi_calificacion ? 'Actualizar Mi Calificación' : 'Publicar Calificación' ?>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        <?php elseif ((int)$_SESSION['usuario_id'] === (int)$perfil_usuario['id']): ?>
+                            <div class="alert alert-light border py-2 px-3 small text-muted mb-4">
+                                <i class="bi bi-info-circle me-1 text-primary"></i> Estás viendo tu perfil público. Los estudiantes que visiten tu página podrán dejarte calificaciones aquí.
+                            </div>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <div class="p-3 bg-light rounded-3 mb-4 text-center border">
+                            <p class="text-muted small mb-2">¿Tomas clases con este profesor?</p>
+                            <a href="<?= APP_URL ?>/login.php" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-box-arrow-in-right me-1"></i> Inicia sesión como estudiante para calificarlo
+                            </a>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- LISTA DE OPINIONES DE ESTUDIANTES -->
                     <?php if (empty($calificaciones)): ?>
                         <div class="text-center py-4 text-muted">
                             <i class="bi bi-chat-square-dots fs-2 d-block mb-2 text-secondary"></i>
-                            Aún no hay opiniones registradas para este profesor.
+                            Aún no hay opiniones registradas para este profesor. ¡Sé el primero en calificarlo!
                         </div>
                     <?php else: ?>
                         <div class="d-flex flex-column gap-3">
@@ -997,12 +1126,13 @@ else:
                                         <span class="fw-semibold text-dark"><?= e($cal['estudiante_nombre']) ?></span>
                                         <span class="estrellas-calificacion">
                                             <?php for ($s = 1; $s <= 5; $s++): ?>
-                                                <i class="bi <?= $s <= (int)$cal['puntaje'] ? 'bi-star-fill text-warning' : 'bi-star text-secondary' ?> small"></i>
+                                                <i class="bi <?= $s <= (int)$cal['puntaje'] ? 'bi-star-fill text-warning' : 'bi-star text-secondary opacity-50' ?> small"></i>
                                             <?php endfor; ?>
+                                            <span class="small fw-bold text-dark ms-1"><?= (int)$cal['puntaje'] ?>.0</span>
                                         </span>
                                     </div>
-                                    <p class="text-secondary small mb-1"><?= nl2br(e($cal['comentario'] ?: 'Sin comentario adicional.')) ?></p>
-                                    <small class="text-muted"><?= date('d/m/Y', strtotime($cal['creado_en'])) ?></small>
+                                    <p class="text-secondary small mb-1"><?= nl2br(e($cal['comentario'] ?: 'Calificación otorgada sin comentario escrito.')) ?></p>
+                                    <small class="text-muted" style="font-size: 0.75rem;"><i class="bi bi-calendar3 me-1"></i><?= date('d/m/Y', strtotime($cal['creado_en'])) ?></small>
                                 </div>
                             <?php endforeach; ?>
                         </div>

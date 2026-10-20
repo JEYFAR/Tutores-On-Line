@@ -142,13 +142,13 @@ CREATE TABLE `sesiones` (
 -- -----------------------------------------------------------------------------
 CREATE TABLE `calificaciones` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  `sesion_id` INT UNSIGNED NOT NULL,
+  `sesion_id` INT UNSIGNED NULL COMMENT 'Opcional, NULL si la calificación se dejó desde el perfil del tutor',
   `estudiante_id` INT UNSIGNED NOT NULL,
   `tutor_id` INT UNSIGNED NOT NULL,
-  `puntaje` TINYINT UNSIGNED NOT NULL,
+  `puntaje` TINYINT UNSIGNED NOT NULL COMMENT 'Puntuación entre 1 y 5 estrellas',
   `comentario` TEXT NULL,
   `creado_en` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY `uq_calificaciones_sesion` (`sesion_id`),
+  UNIQUE KEY `uq_calif_estudiante_tutor` (`estudiante_id`, `tutor_id`),
   CONSTRAINT `fk_calif_sesion`
     FOREIGN KEY (`sesion_id`) REFERENCES `sesiones` (`id`)
     ON DELETE CASCADE ON UPDATE CASCADE,

@@ -52,7 +52,7 @@ try {
                    COALESCE(GROUP_CONCAT(DISTINCT m.nombre ORDER BY m.nombre SEPARATOR ', '), 'Especialidades por definir') AS materias_texto,
                    COALESCE(MIN(tm.tarifa_hora), 0) AS tarifa_min,
                    COALESCE(MAX(tm.tarifa_hora), 0) AS tarifa_max,
-                   COALESCE(ROUND(AVG(c.puntaje), 1), 5.0) AS calificacion,
+                   COALESCE(ROUND(AVG(c.puntaje), 1), 0.0) AS calificacion,
                    COUNT(DISTINCT c.id) AS total_calificaciones
             FROM usuarios u
             LEFT JOIN tutor_materia tm ON tm.tutor_id = u.id
@@ -60,7 +60,7 @@ try {
             LEFT JOIN calificaciones c ON c.tutor_id = u.id
             WHERE {$where}
             GROUP BY u.id, u.nombre, u.ciudad, u.foto
-            ORDER BY calificacion DESC, total_calificaciones DESC";
+            ORDER BY total_calificaciones DESC, calificacion DESC, u.nombre ASC";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($parametros);

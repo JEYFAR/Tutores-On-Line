@@ -133,11 +133,14 @@ require_once dirname(__DIR__) . '/includes/header.php';
                 </div>
 
                 <div class="mb-2">
-                    <span class="estrellas-calificacion">
+                    <span v-if="tutor.total_resenas > 0" class="estrellas-calificacion">
                         <i class="bi bi-star-fill text-warning me-1"></i>
                         <span class="fw-bold text-dark">{{ tutor.calificacion.toFixed(1) }}</span>
+                        <small class="text-muted ms-1">({{ tutor.total_resenas }} {{ tutor.total_resenas === 1 ? 'reseña' : 'reseñas' }})</small>
                     </span>
-                    <small class="text-muted ms-1">({{ tutor.total_resenas }} calificaciones)</small>
+                    <span v-else class="badge bg-light text-secondary border fw-normal py-1 px-2">
+                        <i class="bi bi-star me-1 text-warning"></i> Sin reseñas aún
+                    </span>
                 </div>
 
                 <div class="mb-3 flex-grow-1">
