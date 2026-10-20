@@ -21,3 +21,7 @@ logs/*
 Thumbs.db
 .vscode/
 .idea/
+
+# Documentos temporales y de compilación
+documentacion_sistema.html
+*.pdf
