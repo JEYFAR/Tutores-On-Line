@@ -44,6 +44,36 @@ function obtener_conexion()
 
     try {
         $pdo = new PDO($dsn, $user, $pass, $opciones);
+
+        // Auto-migración ligera para bases de datos ya importadas
+        static $migrado = false;
+        if (!$migrado) {
+            $migrado = true;
+            try {
+                $stmt_col = $pdo->query("SHOW COLUMNS FROM `sesiones` LIKE 'enlace_videollamada'");
+                if ($stmt_col && !$stmt_col->fetch()) {
+                    $pdo->exec("ALTER TABLE `sesiones` ADD COLUMN `enlace_videollamada` VARCHAR(255) NULL DEFAULT NULL COMMENT 'Enlace Jitsi Meet generado al aceptar la solicitud' AFTER `estado`");
+                    $pdo->exec("UPDATE `sesiones` SET `enlace_videollamada` = CONCAT('https://meet.jit.si/tutoria-', `id`) WHERE `estado` IN ('aceptada', 'finalizada') AND `enlace_videollamada` IS NULL");
+                }
+
+                $stmt_desc = $pdo->query("SHOW COLUMNS FROM `usuarios` LIKE 'descripcion'");
+                if ($stmt_desc && !$stmt_desc->fetch()) {
+                    $pdo->exec("ALTER TABLE `usuarios` ADD COLUMN `descripcion` TEXT NULL DEFAULT NULL COMMENT 'Presentación académica y metodología del tutor' AFTER `foto`");
+                    $descripciones_demo = [
+                        4 => 'Ingeniero Civil con más de 6 años de experiencia dictando tutorías universitarias en Matemáticas, Cálculo Diferencial y Álgebra Lineal. Metodología práctica enfocada en resolver ejercicios paso a paso y preparar parciales.',
+                        5 => 'Doctora en Ciencias de la Computación y docente universitaria. Especialista en Programación Web, desarrollo de software, Matemáticas e Inglés técnico con clases personalizadas orientadas a proyectos reales.',
+                        6 => 'Licenciado en Física y Química con amplia trayectoria en bachillerato y primeros semestres universitarios. Clases dinámicas con ejemplos de la vida cotidiana, refuerzo teórico y guías de estudio.',
+                    ];
+                    $stmt_upd_desc = $pdo->prepare("UPDATE `usuarios` SET `descripcion` = ? WHERE `id` = ? AND `rol` = 'tutor' AND (`descripcion` IS NULL OR `descripcion` = '')");
+                    foreach ($descripciones_demo as $tid => $texto_desc) {
+                        $stmt_upd_desc->execute([$texto_desc, $tid]);
+                    }
+                }
+            } catch (Exception $e_mig) {
+                error_log("[TutoresOnLine Auto-Migración]: " . $e_mig->getMessage());
+            }
+        }
+
         return $pdo;
     } catch (PDOException $e) {
         // Registrar el error real en logs sin exponer credenciales al usuario final

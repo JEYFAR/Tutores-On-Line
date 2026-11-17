@@ -11,6 +11,7 @@ header('Content-Type: application/json; charset=UTF-8');
 require_once dirname(__DIR__) . '/config/config.php';
 require_once dirname(__DIR__) . '/includes/conexion.php';
 require_once dirname(__DIR__) . '/includes/seguridad.php';
+require_once dirname(__DIR__) . '/includes/mailer.php';
 
 iniciar_sesion_segura();
 
@@ -47,16 +48,30 @@ elseif ($accion === 'finalizar') $nuevo_estado = 'finalizada';
 
 try {
     $pdo = obtener_conexion();
+    $enlace_videollamada = null;
 
     // Actualizar estado garantizando que la sesión pertenezca al tutor en sesión
-    $stmt = $pdo->prepare("UPDATE `sesiones` SET `estado` = ? WHERE `id` = ? AND `tutor_id` = ?");
-    $stmt->execute([$nuevo_estado, $sesion_id, $tutor_id]);
+    if ($nuevo_estado === 'aceptada') {
+        $codigo_sala = 'TutoresOnLine_Sala_' . $sesion_id . '_' . bin2hex(random_bytes(12));
+        $enlace_videollamada = APP_URL . '/videollamada.php?id=' . $sesion_id;
+        $stmt = $pdo->prepare("UPDATE `sesiones` SET `estado` = ?, `enlace_videollamada` = ? WHERE `id` = ? AND `tutor_id` = ?");
+        $stmt->execute([$nuevo_estado, $codigo_sala, $sesion_id, $tutor_id]);
+    } else {
+        // Al rechazar o finalizar, destruir el token de la sala de videollamada
+        $stmt = $pdo->prepare("UPDATE `sesiones` SET `estado` = ?, `enlace_videollamada` = NULL WHERE `id` = ? AND `tutor_id` = ?");
+        $stmt->execute([$nuevo_estado, $sesion_id, $tutor_id]);
+    }
 
     if ($stmt->rowCount() > 0) {
+        if (in_array($nuevo_estado, ['aceptada', 'rechazada'], true)) {
+            notificar_cambio_estado_sesion($pdo, $sesion_id, $nuevo_estado);
+        }
+
         echo json_encode([
             'exito' => true,
             'mensaje' => "La sesión #{$sesion_id} ha sido marcada como '{$nuevo_estado}'.",
-            'nuevo_estado' => $nuevo_estado
+            'nuevo_estado' => $nuevo_estado,
+            'enlace_videollamada' => $enlace_videollamada
         ]);
     } else {
         http_response_code(404);

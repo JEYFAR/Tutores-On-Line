@@ -32,20 +32,20 @@ INSERT INTO `niveles` (`id`, `nombre`) VALUES
 -- 3. Insertar Usuarios
 -- (3 estudiantes y 3 tutores)
 -- -----------------------------------------------------------------------------
-INSERT INTO `usuarios` (`id`, `nombre`, `correo`, `password_hash`, `rol`, `ciudad`, `foto`, `correo_verificado`, `creado_en`) VALUES
+INSERT INTO `usuarios` (`id`, `nombre`, `correo`, `password_hash`, `rol`, `ciudad`, `foto`, `descripcion`, `correo_verificado`, `creado_en`) VALUES
 -- Estudiante 1 (Verificado)
-(1, 'Carlos Mendoza', 'carlos.estudiante@ejemplo.com', '$2y$12$YsWGFAzkXWTUOvPBQQ68HeswFyGA2IYrG5eM.hRQX0vdh/v02VIeC', 'estudiante', 'Bogotá', NULL, 1, NOW()),
+(1, 'Carlos Mendoza', 'carlos.estudiante@ejemplo.com', '$2y$12$YsWGFAzkXWTUOvPBQQ68HeswFyGA2IYrG5eM.hRQX0vdh/v02VIeC', 'estudiante', 'Bogotá', NULL, NULL, 1, NOW()),
 -- Estudiante 2 (Verificado)
-(2, 'Laura Gómez', 'laura.estudiante@ejemplo.com', '$2y$12$YsWGFAzkXWTUOvPBQQ68HeswFyGA2IYrG5eM.hRQX0vdh/v02VIeC', 'estudiante', 'Medellín', NULL, 1, NOW()),
+(2, 'Laura Gómez', 'laura.estudiante@ejemplo.com', '$2y$12$YsWGFAzkXWTUOvPBQQ68HeswFyGA2IYrG5eM.hRQX0vdh/v02VIeC', 'estudiante', 'Medellín', NULL, NULL, 1, NOW()),
 -- Estudiante 3 (Pendiente de verificar correo)
-(3, 'Andrés Ramos', 'andres.pendiente@ejemplo.com', '$2y$12$YsWGFAzkXWTUOvPBQQ68HeswFyGA2IYrG5eM.hRQX0vdh/v02VIeC', 'estudiante', 'Cali', NULL, 0, NOW()),
+(3, 'Andrés Ramos', 'andres.pendiente@ejemplo.com', '$2y$12$YsWGFAzkXWTUOvPBQQ68HeswFyGA2IYrG5eM.hRQX0vdh/v02VIeC', 'estudiante', 'Cali', NULL, NULL, 0, NOW()),
 
 -- Tutor 1: Ing. Roberto Díaz (Matemáticas, Cálculo)
-(4, 'Roberto Díaz', 'roberto.tutor@ejemplo.com', '$2y$12$YsWGFAzkXWTUOvPBQQ68HeswFyGA2IYrG5eM.hRQX0vdh/v02VIeC', 'tutor', 'Bogotá', NULL, 1, NOW()),
+(4, 'Roberto Díaz', 'roberto.tutor@ejemplo.com', '$2y$12$YsWGFAzkXWTUOvPBQQ68HeswFyGA2IYrG5eM.hRQX0vdh/v02VIeC', 'tutor', 'Bogotá', NULL, 'Ingeniero Civil con más de 6 años de experiencia dictando tutorías universitarias en Matemáticas, Cálculo Diferencial y Álgebra Lineal. Metodología práctica enfocada en resolver ejercicios paso a paso y preparar parciales.', 1, NOW()),
 -- Tutor 2: Dra. María Fernanda Peña (Programación, Inglés)
-(5, 'María Fernanda Peña', 'maria.tutor@ejemplo.com', '$2y$12$YsWGFAzkXWTUOvPBQQ68HeswFyGA2IYrG5eM.hRQX0vdh/v02VIeC', 'tutor', 'Medellín', NULL, 1, NOW()),
+(5, 'María Fernanda Peña', 'maria.tutor@ejemplo.com', '$2y$12$YsWGFAzkXWTUOvPBQQ68HeswFyGA2IYrG5eM.hRQX0vdh/v02VIeC', 'tutor', 'Medellín', NULL, 'Doctora en Ciencias de la Computación y docente universitaria. Especialista en Programación Web, desarrollo de software, Matemáticas e Inglés técnico con clases personalizadas orientadas a proyectos reales.', 1, NOW()),
 -- Tutor 3: Lic. Camilo Torres (Física, Química)
-(6, 'Camilo Torres', 'camilo.tutor@ejemplo.com', '$2y$12$YsWGFAzkXWTUOvPBQQ68HeswFyGA2IYrG5eM.hRQX0vdh/v02VIeC', 'tutor', 'Cali', NULL, 1, NOW());
+(6, 'Camilo Torres', 'camilo.tutor@ejemplo.com', '$2y$12$YsWGFAzkXWTUOvPBQQ68HeswFyGA2IYrG5eM.hRQX0vdh/v02VIeC', 'tutor', 'Cali', NULL, 'Licenciado en Física y Química con amplia trayectoria en bachillerato y primeros semestres universitarios. Clases dinámicas con ejemplos de la vida cotidiana, refuerzo teórico y guías de estudio.', 1, NOW());
 
 -- -----------------------------------------------------------------------------
 -- 4. Asociar Tutores con Materias, Niveles y Tarifas (COP / Hora)
@@ -87,15 +87,15 @@ INSERT INTO `disponibilidad` (`tutor_id`, `dia_semana`, `hora_inicio`, `hora_fin
 -- -----------------------------------------------------------------------------
 -- 6. Sesiones de tutoría de prueba
 -- -----------------------------------------------------------------------------
-INSERT INTO `sesiones` (`id`, `estudiante_id`, `tutor_id`, `materia_id`, `fecha`, `hora_inicio`, `hora_fin`, `modalidad`, `estado`, `creado_en`) VALUES
+INSERT INTO `sesiones` (`id`, `estudiante_id`, `tutor_id`, `materia_id`, `fecha`, `hora_inicio`, `hora_fin`, `modalidad`, `estado`, `enlace_videollamada`, `creado_en`) VALUES
 -- Sesión 1: Finalizada y calificada
-(1, 1, 4, 6, '2026-10-10', '09:00:00', '11:00:00', 'virtual', 'finalizada', '2026-10-08 14:30:00'),
+(1, 1, 4, 6, '2026-10-10', '09:00:00', '11:00:00', 'virtual', 'finalizada', 'TutoresOnLine_Sala_1_9f8a7c4e2b1d6a5f3e0c9b8a', '2026-10-08 14:30:00'),
 -- Sesión 2: Aceptada (próxima)
-(2, 1, 5, 4, '2026-10-22', '10:00:00', '12:00:00', 'virtual', 'aceptada', '2026-10-15 11:00:00'),
+(2, 1, 5, 4, '2026-10-22', '10:00:00', '12:00:00', 'virtual', 'aceptada', 'TutoresOnLine_Sala_2_4c7b1e9a3d5f8c2e6b0a1d4f', '2026-10-15 11:00:00'),
 -- Sesión 3: Pendiente de aprobación por el tutor
-(3, 2, 6, 2, '2026-10-25', '16:00:00', '18:00:00', 'virtual', 'pendiente', '2026-10-16 09:20:00'),
+(3, 2, 6, 2, '2026-10-25', '16:00:00', '18:00:00', 'virtual', 'pendiente', NULL, '2026-10-16 09:20:00'),
 -- Sesión 4: Rechazada
-(4, 2, 4, 7, '2026-10-12', '15:00:00', '17:00:00', 'presencial', 'rechazada', '2026-10-09 18:00:00');
+(4, 2, 4, 7, '2026-10-12', '15:00:00', '17:00:00', 'presencial', 'rechazada', NULL, '2026-10-09 18:00:00');
 
 -- -----------------------------------------------------------------------------
 -- 7. Calificaciones de prueba

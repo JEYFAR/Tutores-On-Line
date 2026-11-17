@@ -42,6 +42,7 @@ CREATE TABLE `usuarios` (
   `rol` ENUM('estudiante', 'tutor') NOT NULL,
   `ciudad` VARCHAR(100) NULL,
   `foto` VARCHAR(255) NULL COMMENT 'Nombre o ruta del archivo de imagen de perfil',
+  `descripcion` TEXT NULL DEFAULT NULL COMMENT 'Presentación académica y metodología del tutor',
   `correo_verificado` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '0: pendiente, 1: verificado',
   `creado_en` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `uq_usuarios_correo` (`correo`),
@@ -121,6 +122,7 @@ CREATE TABLE `sesiones` (
   `hora_fin` TIME NOT NULL,
   `modalidad` ENUM('virtual', 'presencial') NOT NULL DEFAULT 'virtual',
   `estado` ENUM('pendiente', 'aceptada', 'rechazada', 'finalizada') NOT NULL DEFAULT 'pendiente',
+  `enlace_videollamada` VARCHAR(255) NULL DEFAULT NULL COMMENT 'Enlace Jitsi Meet generado al aceptar la solicitud',
   `creado_en` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT `fk_sesiones_estudiante`
     FOREIGN KEY (`estudiante_id`) REFERENCES `usuarios` (`id`)

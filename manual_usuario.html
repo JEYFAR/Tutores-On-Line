@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TutoresOnLine - Manual del Usuario Ilustrado</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --dark: #0f172a;
+            --gray: #475569;
+            --light: #f8fafc;
+            --border: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            color: #1e293b;
+            background: #ffffff;
+            line-height: 1.6;
+            font-size: 13.5px;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        @page { size: letter; margin: 16mm; }
+        @media print {
+            body { max-width: 100%; padding: 0; }
+            .page-break { page-break-after: always; break-after: page; }
+            .screen-mockup, .cover, .step-card, .badge {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+        .cover {
+            background: linear-gradient(135deg, #0f172a 0%, #1e40af 60%, #2563eb 100%);
+            color: #fff;
+            border-radius: 16px;
+            padding: 48px 40px;
+            margin-bottom: 32px;
+        }
+        .cover-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.18);
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 18px;
+        }
+        .cover h1 { font-size: 32px; font-weight: 800; margin-bottom: 10px;}
+        .cover p { font-size: 15px; opacity: 0.9; max-width: 680px; color: #fff;}
+        .cover-meta {
+            margin-top: 28px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            font-size: 12.5px;
+        }
+        h2 {
+            font-size: 20px;
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 8px;
+            margin: 28px 0 14px 0;
+        }
+        h3 { font-size: 15.5px; color: var(--dark); margin: 18px 0 8px 0; }
+        p { margin-bottom: 10px; color: var(--gray); }
+        ol, ul { margin: 8px 0 14px 22px; color: var(--gray); }
+        li { margin-bottom: 6px; }
+        .step-card {
+            background: var(--light);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+        }
+        /* Mockups visuales de pantallas para guía gráfica */
+        .screen-mockup {
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 14px 0 22px 0;
+            background: #f8fafc;
+            box-shadow: 0 4px 12px rgba(15,23,42,0.06);
+            page-break-inside: avoid;
+        }
+        .browser-bar {
+            background: #e2e8f0;
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .dot.r { background: #ef4444; }
+        .dot.y { background: #f59e0b; }
+        .dot.g { background: #22c55e; }
+        .url-box {
+            background: #ffffff;
+            border-radius: 6px;
+            padding: 3px 12px;
+            font-size: 11px;
+            color: #475569;
+            flex: 1;
+            margin-left: 6px;
+            font-family: monospace;
+        }
+        .screen-body { padding: 18px; background: #f8fafc; }
+        .mock-nav {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            font-size: 12px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .b-blue { background: #dbeafe; color: #1d4ed8; }
+        .b-green { background: #dcfce7; color: #15803d; }
+        .b-yellow { background: #fef3c7; color: #b45309; }
+        .btn-mock {
+            display: inline-block;
+            background: var(--primary);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+        .btn-mock-green { background: var(--success); color: #fff; padding: 5px 12px; border-radius: 6px; font-size: 11.5px; font-weight: 600; }
+        .caption {
+            background: #fff;
+            border-top: 1px solid var(--border);
+            padding: 8px 14px;
+            font-size: 11.5px;
+            color: #64748b;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cover">
+        <div class="cover-tag">Proyecto Final &bull; Entregable Oficial</div>
+        <h1>Manual del Usuario — TutoresOnLine</h1>
+        <p>Guía visual paso a paso con vistas ilustradas de cada pantalla para Estudiantes y Profesores Tutores: registro, búsqueda inteligente, reserva de tutorías, sala privada de videollamada, chat en tiempo real y asistente académico con IA.</p>
+        <div class="cover-meta">
+            <div><strong>Product Owner:</strong> Profesor Edgar Morillo</div>
+            <div><strong>Scrum Master / Líder Técnico:</strong> Jesús David Ayala Noche (Jeyfar)</div>
+            <div><strong>Equipo:</strong> Ricardo J. Cudriz, Steven M. Yépez, Yojaner Sanjuan</div>
+        </div>
+    </div>
+
+    <h2>1. Registro e Inicio de Sesión (Estudiantes y Tutores)</h2>
+    <ol>
+        <li>Ingresa a la página principal y pulsa <strong>Registrarse</strong> (o <strong>Iniciar Sesión</strong> si ya tienes cuenta).</li>
+        <li>Selecciona tu rol (<strong>Estudiante</strong> o <strong>Tutor</strong>), completa tu nombre, correo, ciudad y contraseña, o usa el botón <strong>Continuar con Google</strong>.</li>
+        <li>Activa tu cuenta desde el enlace enviado a tu correo electrónico (en entorno local también queda disponible en <code>logs/mail.log</code>).</li>
+    </ol>
+
+    <div class="screen-mockup">
+        <div class="browser-bar">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="url-box">http://localhost/tutoresonline/public/login.php</span>
+        </div>
+        <div class="screen-body">
+            <div style="max-width: 360px; margin: 0 auto; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 18px;">
+                <div style="text-align:center; font-weight:700; font-size:15px; margin-bottom:4px; color:var(--dark);">Bienvenido de nuevo</div>
+                <div style="text-align:center; font-size:11.5px; color:#64748b; margin-bottom:12px;">Ingresa a tu cuenta de TutoresOnLine</div>
+                <div style="border:1px solid #cbd5e1; border-radius:6px; padding:6px; text-align:center; font-size:12px; font-weight:600; margin-bottom:10px; background:#fff;">
+                    <span style="color:#dc2626; font-weight:800;">G</span> Continuar con Google
+                </div>
+                <div style="font-size:11px; font-weight:600; margin-bottom:3px;">Correo Electrónico</div>
+                <div style="border:1px solid var(--border); border-radius:6px; padding:5px 8px; font-size:11.5px; margin-bottom:8px; background:#f8fafc;">carlos.estudiante@ejemplo.com</div>
+                <div style="font-size:11px; font-weight:600; margin-bottom:3px;">Contraseña</div>
+                <div style="border:1px solid var(--border); border-radius:6px; padding:5px 8px; font-size:11.5px; margin-bottom:10px; background:#f8fafc;">•••••••••••</div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:12px;">
+                    <span>☑ Recordarme (30 días)</span>
+                    <span style="color:var(--primary);">¿Olvidaste tu clave?</span>
+                </div>
+                <div class="btn-mock" style="width:100%; text-align:center;">Iniciar Sesión</div>
+            </div>
+        </div>
+        <div class="caption">Figura 1. Pantalla de Inicio de Sesión con soporte de Google OAuth 2.0 y sesión persistente de 30 días.</div>
+    </div>
+
+    <h2>2. Buscador Reactivo de Tutores y Perfil del Profesor</h2>
+    <ol>
+        <li>Desde el menú superior, haz clic en <strong>Buscar Tutores</strong>.</li>
+        <li>Filtra en tiempo real por <strong>Materia o Nombre</strong>, <strong>Nivel Educativo</strong> (Primaria, Secundaria, Bachillerato, Universidad), <strong>Modalidad</strong> (Virtual o Presencial) y <strong>Ciudad</strong>.</li>
+        <li>Haz clic en <strong>Ver Perfil</strong> para leer la sección <strong>Sobre el Profesor</strong> (descripción profesional), consultar tarifas por hora, horarios disponibles, hoja de vida en PDF y reseñas con estrellas.</li>
+    </ol>
+
+    <div class="screen-mockup">
+        <div class="browser-bar">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="url-box">http://localhost/tutoresonline/public/buscar.php</span>
+        </div>
+        <div class="screen-body">
+            <div style="background:#fff; border:1px solid var(--border); border-radius:8px; padding:10px; margin-bottom:12px; display:grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap:8px; font-size:11.5px;">
+                <div style="border:1px solid var(--border); padding:5px 8px; border-radius:6px;">🔍 Cálculo, Programación...</div>
+                <div style="border:1px solid var(--border); padding:5px 8px; border-radius:6px;">Nivel: Universidad</div>
+                <div style="border:1px solid var(--border); padding:5px 8px; border-radius:6px;">Modalidad: Virtual</div>
+                <div class="btn-mock" style="text-align:center;">Aplicar Filtros</div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <strong>Roberto Díaz</strong>
+                        <span style="color:#f59e0b; font-weight:700;">★ 5.0 (1 reseña)</span>
+                    </div>
+                    <div style="font-size:11px; color:#64748b; margin-bottom:6px;">📍 Bogotá &bull; Matemáticas, Cálculo Diferencial, Álgebra Lineal</div>
+                    <div style="font-size:11.5px; color:#334155; margin-bottom:10px;">Ingeniero Civil con más de 6 años de experiencia dictando tutorías universitarias...</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:8px;">
+                        <strong style="color:var(--primary);">$45.000 /h</strong>
+                        <span class="btn-mock">Ver Perfil</span>
+                    </div>
+                </div>
+                <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <strong>María Fernanda Peña</strong>
+                        <span class="badge b-blue">Verificada</span>
+                    </div>
+                    <div style="font-size:11px; color:#64748b; margin-bottom:6px;">📍 Medellín &bull; Programación Web, Matemáticas, Inglés</div>
+                    <div style="font-size:11.5px; color:#334155; margin-bottom:10px;">Doctora en Ciencias de la Computación y docente universitaria...</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:8px;">
+                        <strong style="color:var(--primary);">$30.000 /h</strong>
+                        <span class="btn-mock">Ver Perfil</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="caption">Figura 2. Buscador interactivo con filtros multicriterio, reputación por estrellas y extracto profesional del docente.</div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2>3. Reserva de Tutoría y Notificación por Correo</h2>
+    <ol>
+        <li>Dentro del perfil del profesor, pulsa <strong>Reservar Tutoría</strong>.</li>
+        <li>Selecciona la asignatura, la modalidad (<strong>Virtual</strong> o <strong>Presencial</strong>), la fecha y el rango de horas.</li>
+        <li>Al confirmar, el sistema registra la reserva y <strong>envía automáticamente un correo electrónico</strong> tanto al profesor como al estudiante.</li>
+    </ol>
+
+    <h2>4. Panel de Control y Sala Privada de Videollamada</h2>
+    <ol>
+        <li>El profesor entra a su <strong>Panel de Tutor</strong> y pulsa el botón verde <strong>✔ Aceptar</strong> sobre la solicitud recibida.</li>
+        <li>El estudiante recibe un correo confirmando la aceptación y en el <strong>Panel</strong> de ambos se activa el botón verde <strong>Entrar a Sala</strong>.</li>
+        <li>Al hacer clic en <strong>Entrar a Sala</strong> (<code>videollamada.php?id=X</code>), se abre la sala privada embebida dentro de TutoresOnLine con el nombre del usuario, temporizador regresivo y botón <strong>Finalizar y Cerrar Sala</strong> (que destruye el acceso al terminar la clase).</li>
+    </ol>
+
+    <div class="screen-mockup">
+        <div class="browser-bar">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="url-box">http://localhost/tutoresonline/public/videollamada.php?id=2</span>
+        </div>
+        <div class="screen-body">
+            <div style="background:#fff; border:1px solid var(--border); border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div>
+                    <strong>Programación Web</strong>
+                    <span class="badge b-green" style="margin-left:6px;">🔒 Sala Privada Temporal</span>
+                    <span class="badge" style="background:#0f172a; color:#fff; margin-left:4px;">⏳ 01:58:42</span>
+                    <div style="font-size:11px; color:#64748b; margin-top:2px;">Profesor: María Fernanda Peña &bull; 22/10/2026 (10:00 - 12:00)</div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <span class="btn-mock" style="background:#ef4444;">📞 Finalizar y Cerrar Sala</span>
+                </div>
+            </div>
+            <div style="background:#0f172a; color:#fff; border-radius:8px; height:170px; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative;">
+                <div style="font-size:13px; font-weight:600; margin-bottom:6px;">🎥 Videoconferencia Activa — Carlos Mendoza (Estudiante)</div>
+                <div style="font-size:11px; opacity:0.75;">Audio HD &bull; Video HD &bull; Compartir Pantalla &bull; Pizarra</div>
+            </div>
+        </div>
+        <div class="caption">Figura 3. Sala privada de videollamada embebida con control de acceso por sesión, temporizador de clase y autodestrucción al finalizar.</div>
+    </div>
+
+    <h2>5. Chat en Tiempo Real y Asistente Académico con IA</h2>
+    <ul>
+        <li><strong>Mensajería Directa (<code>chat.php</code>):</strong> Permite conversar en tiempo real entre estudiante y profesor para coordinar detalles o materiales antes de la sesión.</li>
+        <li><strong>Asistente Académico con IA (Botón flotante <code>✨ Asistente IA</code>):</strong> Disponible en la esquina inferior derecha de toda la plataforma. Permite resolver dudas de cualquier materia, pedir explicaciones paso a paso o consultar qué tutores y tarifas hay disponibles.</li>
+    </ul>
+
+    <div class="screen-mockup">
+        <div class="browser-bar">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="url-box">Widget Flotante &mdash; Asistente Académico IA</span>
+        </div>
+        <div class="screen-body" style="display:flex; justify-content:center;">
+            <div style="width:340px; background:#fff; border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+                <div style="background:var(--primary); color:#fff; padding:8px 12px; font-weight:700; font-size:12.5px;">✨ Asistente Académico &bull; En línea</div>
+                <div style="padding:12px; background:#f8fafc; font-size:11.5px; display:flex; flex-direction:column; gap:8px;">
+                    <div style="background:#fff; border:1px solid var(--border); padding:8px 10px; border-radius:8px; max-width:85%;">¡Hola! Soy el asistente de TutoresOnLine. ¿En qué materia tienes dudas hoy?</div>
+                    <div style="background:var(--primary); color:#fff; padding:8px 10px; border-radius:8px; align-self:flex-end; max-width:85%;">¿Qué profesor me recomiendas para Cálculo Diferencial?</div>
+                    <div style="background:#fff; border:1px solid var(--border); padding:8px 10px; border-radius:8px; max-width:85%;">Te recomiendo al profesor <strong>Roberto Díaz</strong> en Bogotá, quien imparte Cálculo Diferencial a nivel Universitario por $50.000 COP/hora.</div>
+                </div>
+            </div>
+        </div>
+        <div class="caption">Figura 4. Asistente Académico con IA conectado en tiempo real al catálogo de tutores de la plataforma.</div>
+    </div>
+
+</body>
+</html>

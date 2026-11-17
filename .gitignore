@@ -21,7 +21,10 @@ logs/*
 Thumbs.db
 .vscode/
 .idea/
+*.code-workspace
 
-# Documentos temporales y de compilación
-documentacion_sistema.html
+# Documentos PDF generados (excluidos de Git)
 *.pdf
+Manual_del_Programador_TutoresOnLine.pdf
+Manual_de_Usuario_TutoresOnLine.pdf
+Propuesta_Comercial_TutoresOnLine.pdf

@@ -145,7 +145,10 @@ require_once dirname(__DIR__) . '/includes/header.php';
 
                 <div class="mb-3 flex-grow-1">
                     <div class="small fw-semibold text-muted mb-1">Especialidades:</div>
-                    <div class="small text-secondary">{{ tutor.materias }}</div>
+                    <div class="small text-secondary mb-2">{{ tutor.materias }}</div>
+                    <p v-if="tutor.descripcion" class="small text-muted mb-0" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        {{ tutor.descripcion }}
+                    </p>
                 </div>
 
                 <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-auto">

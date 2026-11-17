@@ -8,6 +8,7 @@
  */
 
 require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/mailer.php';
 
 // Control estricto: requiere inicio de sesión
 requiere_login();
@@ -69,9 +70,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $estado = $_POST['estado'] ?? '';
 
             if ($sesion_id > 0 && in_array($estado, ['aceptada', 'rechazada', 'finalizada'], true)) {
-                $stmt = $pdo->prepare("UPDATE `sesiones` SET `estado` = ? WHERE `id` = ? AND `tutor_id` = ?");
-                $stmt->execute([$estado, $sesion_id, $usuario_id]);
-                set_flash('success', "La sesión #{$sesion_id} ahora está '{$estado}'.");
+                if ($estado === 'aceptada') {
+                    $codigo_sala = 'TutoresOnLine_Sala_' . $sesion_id . '_' . bin2hex(random_bytes(12));
+                    $stmt = $pdo->prepare("UPDATE `sesiones` SET `estado` = ?, `enlace_videollamada` = ? WHERE `id` = ? AND `tutor_id` = ?");
+                    $stmt->execute([$estado, $codigo_sala, $sesion_id, $usuario_id]);
+                } else {
+                    // Al rechazar o finalizar la tutoría, se destruye el token de la sala
+                    $stmt = $pdo->prepare("UPDATE `sesiones` SET `estado` = ?, `enlace_videollamada` = NULL WHERE `id` = ? AND `tutor_id` = ?");
+                    $stmt->execute([$estado, $sesion_id, $usuario_id]);
+                }
+
+                if ($stmt->rowCount() > 0 && in_array($estado, ['aceptada', 'rechazada'], true)) {
+                    notificar_cambio_estado_sesion($pdo, $sesion_id, $estado);
+                }
+
+                if ($estado === 'aceptada') {
+                    set_flash('success', '¡Tutoría aceptada! Ya está disponible el acceso a la videollamada y se notificó al estudiante por correo.');
+                } else {
+                    set_flash('success', "La tutoría ahora está '{$estado}'.");
+                }
             }
             header('Location: ' . APP_URL . '/panel.php');
             exit;
@@ -310,11 +327,14 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                     <th>Fecha y Horario</th>
                                     <th>Modalidad</th>
                                     <th>Estado</th>
-                                    <th class="text-end">Calificación</th>
+                                    <th class="text-end">Videollamada / Calificación</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($sesiones_estudiante as $s): ?>
+                                    <?php
+                                    $enlace_sala_est = APP_URL . '/videollamada.php?id=' . (int)$s['id'];
+                                    ?>
                                     <tr>
                                         <td class="fw-semibold text-dark"><?= e($s['materia_nombre']) ?></td>
                                         <td>
@@ -348,59 +368,67 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                             </span>
                                         </td>
                                         <td class="text-end">
-                                            <?php if ($s['estado'] === 'finalizada'): ?>
-                                                <?php if ($s['calificacion_puntaje']): ?>
-                                                    <span class="estrellas-calificacion small">
-                                                        <?php for ($st = 1; $st <= (int)$s['calificacion_puntaje']; $st++): ?>
-                                                            <i class="bi bi-star-fill text-warning"></i>
-                                                        <?php endfor; ?>
-                                                    </span>
+                                            <div class="d-inline-flex flex-wrap gap-1 justify-content-end align-items-center">
+                                                <?php if ($s['estado'] === 'aceptada'): ?>
+                                                    <a href="<?= e($enlace_sala_est) ?>" class="btn btn-sm btn-success">
+                                                        <i class="bi bi-camera-video-fill me-1"></i> Entrar a Sala
+                                                    </a>
+                                                <?php elseif ($s['estado'] === 'finalizada'): ?>
+                                                    <?php if ($s['calificacion_puntaje']): ?>
+                                                        <span class="estrellas-calificacion small ms-1">
+                                                            <?php for ($st = 1; $st <= (int)$s['calificacion_puntaje']; $st++): ?>
+                                                                <i class="bi bi-star-fill text-warning"></i>
+                                                            <?php endfor; ?>
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalCalif<?= $s['id'] ?>">
+                                                            <i class="bi bi-star me-1"></i> Calificar
+                                                        </button>
+                                                    <?php endif; ?>
                                                 <?php else: ?>
-                                                    <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalCalif<?= $s['id'] ?>">
-                                                        <i class="bi bi-star me-1"></i> Calificar
-                                                    </button>
+                                                    <span class="text-muted small">&mdash;</span>
+                                                <?php endif; ?>
+                                            </div>
 
-                                                    <!-- Modal de Calificación -->
-                                                    <div class="modal fade" id="modalCalif<?= $s['id'] ?>" tabindex="-1" aria-hidden="true">
-                                                        <div class="modal-dialog modal-dialog-centered">
-                                                            <div class="modal-content text-start">
-                                                                <div class="modal-header">
-                                                                    <h5 class="modal-title fw-bold">Calificar Tutoría</h5>
-                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                                                                </div>
-                                                                <form action="<?= APP_URL ?>/panel.php" method="POST">
-                                                                    <div class="modal-body">
-                                                                        <?= csrf_campo() ?>
-                                                                        <input type="hidden" name="accion" value="calificar">
-                                                                        <input type="hidden" name="sesion_id" value="<?= (int)$s['id'] ?>">
-
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label fw-medium">Puntuación (1 a 5 estrellas)</label>
-                                                                            <select name="puntaje" class="form-select" required>
-                                                                                <option value="5" selected>⭐⭐⭐⭐⭐ - Excelente (5)</option>
-                                                                                <option value="4">⭐⭐⭐⭐ - Muy buena (4)</option>
-                                                                                <option value="3">⭐⭐⭐ - Aceptable (3)</option>
-                                                                                <option value="2">⭐⭐ - Regular (2)</option>
-                                                                                <option value="1">⭐ - Mala (1)</option>
-                                                                            </select>
-                                                                        </div>
-
-                                                                        <div class="mb-3">
-                                                                            <label class="form-label fw-medium">Comentario u Opinión</label>
-                                                                            <textarea name="comentario" rows="3" class="form-control" placeholder="¿Cómo fue la puntualidad y la claridad del profesor?"></textarea>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="modal-footer">
-                                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                                                                        <button type="submit" class="btn btn-primary-custom btn-sm">Guardar Calificación</button>
-                                                                    </div>
-                                                                </form>
+                                            <?php if ($s['estado'] === 'finalizada' && !$s['calificacion_puntaje']): ?>
+                                                <!-- Modal de Calificación -->
+                                                <div class="modal fade" id="modalCalif<?= $s['id'] ?>" tabindex="-1" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content text-start">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title fw-bold">Calificar Tutoría</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                                                             </div>
+                                                            <form action="<?= APP_URL ?>/panel.php" method="POST">
+                                                                <div class="modal-body">
+                                                                    <?= csrf_campo() ?>
+                                                                    <input type="hidden" name="accion" value="calificar">
+                                                                    <input type="hidden" name="sesion_id" value="<?= (int)$s['id'] ?>">
+
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label fw-medium">Puntuación (1 a 5 estrellas)</label>
+                                                                        <select name="puntaje" class="form-select" required>
+                                                                            <option value="5" selected>⭐⭐⭐⭐⭐ - Excelente (5)</option>
+                                                                            <option value="4">⭐⭐⭐⭐ - Muy buena (4)</option>
+                                                                            <option value="3">⭐⭐⭐ - Aceptable (3)</option>
+                                                                            <option value="2">⭐⭐ - Regular (2)</option>
+                                                                            <option value="1">⭐ - Mala (1)</option>
+                                                                        </select>
+                                                                    </div>
+
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label fw-medium">Comentario u Opinión</label>
+                                                                        <textarea name="comentario" rows="3" class="form-control" placeholder="¿Cómo fue la puntualidad y la claridad del profesor?"></textarea>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                                                                    <button type="submit" class="btn btn-primary-custom btn-sm">Guardar Calificación</button>
+                                                                </div>
+                                                            </form>
                                                         </div>
                                                     </div>
-                                                <?php endif; ?>
-                                            <?php else: ?>
-                                                <span class="text-muted small">&mdash;</span>
+                                                </div>
                                             <?php endif; ?>
                                         </td>
                                     </tr>
@@ -448,6 +476,9 @@ require_once dirname(__DIR__) . '/includes/header.php';
                             </thead>
                             <tbody>
                                 <?php foreach ($solicitudes_tutor as $sol): ?>
+                                    <?php
+                                    $enlace_sala_tut = APP_URL . '/videollamada.php?id=' . (int)$sol['id'];
+                                    ?>
                                     <tr>
                                         <td>
                                             <div class="fw-semibold text-dark d-flex align-items-center gap-2">
@@ -481,8 +512,8 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                             </span>
                                         </td>
                                         <td class="text-end">
-                                            <?php if ($sol['estado'] === 'pendiente'): ?>
-                                                <div class="d-inline-flex gap-1">
+                                            <div class="d-inline-flex flex-wrap gap-1 justify-content-end align-items-center">
+                                                <?php if ($sol['estado'] === 'pendiente'): ?>
                                                     <form action="<?= APP_URL ?>/panel.php" method="POST" class="d-inline">
                                                         <?= csrf_campo() ?>
                                                         <input type="hidden" name="accion" value="estado_sesion">
@@ -497,18 +528,21 @@ require_once dirname(__DIR__) . '/includes/header.php';
                                                         <input type="hidden" name="estado" value="rechazada">
                                                         <button type="submit" class="btn btn-sm btn-outline-danger" title="Rechazar"><i class="bi bi-x-lg"></i></button>
                                                     </form>
-                                                </div>
-                                            <?php elseif ($sol['estado'] === 'aceptada'): ?>
-                                                <form action="<?= APP_URL ?>/panel.php" method="POST" class="d-inline">
-                                                    <?= csrf_campo() ?>
-                                                    <input type="hidden" name="accion" value="estado_sesion">
-                                                    <input type="hidden" name="sesion_id" value="<?= (int)$sol['id'] ?>">
-                                                    <input type="hidden" name="estado" value="finalizada">
-                                                    <button type="submit" class="btn btn-sm btn-outline-primary">Marcar Finalizada</button>
-                                                </form>
-                                            <?php else: ?>
-                                                <span class="text-muted small">&mdash;</span>
-                                            <?php endif; ?>
+                                                <?php elseif ($sol['estado'] === 'aceptada'): ?>
+                                                    <a href="<?= e($enlace_sala_tut) ?>" class="btn btn-sm btn-success">
+                                                        <i class="bi bi-camera-video-fill me-1"></i> Entrar a Sala
+                                                    </a>
+                                                    <form action="<?= APP_URL ?>/panel.php" method="POST" class="d-inline">
+                                                        <?= csrf_campo() ?>
+                                                        <input type="hidden" name="accion" value="estado_sesion">
+                                                        <input type="hidden" name="sesion_id" value="<?= (int)$sol['id'] ?>">
+                                                        <input type="hidden" name="estado" value="finalizada">
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">Marcar Finalizada</button>
+                                                    </form>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">&mdash;</span>
+                                                <?php endif; ?>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

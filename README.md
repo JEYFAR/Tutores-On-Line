@@ -53,11 +53,17 @@ Desarrollada en **PHP 7.4 puro (PDO)**, **MySQL 5.7 (InnoDB con utf8mb4)**, **Bo
 - **Arquitectura de Polling Incremental:** Consulta periódica eficiente cada 2.5 segundos mediante parámetro `desde_id`, descargando únicamente los mensajes nuevos.
 - Marcas de lectura automáticas, ordenamiento dinámico de conversaciones por actividad y validación de seguridad de pertenencia al hilo (`HTTP 403`).
 
-### 7. 📅 Agendamiento y Ciclo de Vida de Tutorías
+### 7. 📅 Agendamiento, Videoconferencia y Notificaciones
 - Solicitud guiada de clases con validación de horarios y modalidad.
+- **Videoconferencia con Jitsi Meet:** Al aceptar una solicitud, el sistema genera y almacena automáticamente el enlace único `https://meet.jit.si/tutoria-{id}` en la tabla `sesiones` y habilita el botón de acceso directo para estudiante y tutor.
+- **Notificaciones por Correo (SMTP + Log):** Envío automático vía `includes/mailer.php` (`MAIL_DRIVER=smtp`, compatible con Gmail/Mailtrap y respaldo en `logs/mail.log`) al crear una reserva y cuando el tutor la acepta o rechaza.
 - Dashboard unificado (`panel.php`) adaptativo por rol:
-  - *Estudiantes:* Seguimiento de solicitudes (Pendiente, Aceptada, Rechazada, Finalizada), acceso al chat del tutor y modal de calificación.
-  - *Tutores:* Aprobación o rechazo de solicitudes entrantes, marcado de finalización, configuración de franjas horarias y alta al vuelo de nuevas materias.
+  - *Estudiantes:* Seguimiento de solicitudes (Pendiente, Aceptada, Rechazada, Finalizada), acceso directo a la sala Jitsi Meet, chat del tutor y modal de calificación.
+  - *Tutores:* Aprobación o rechazo de solicitudes entrantes, acceso a sala Jitsi Meet, marcado de finalización, configuración de franjas horarias y alta al vuelo de nuevas materias.
+
+### 8. ✨ Asistente de Chat con IA (OpenRouter)
+- Endpoint `/api/chat_ia.php` (`cURL` en PHP puro) conectado a **OpenRouter** (`OPENROUTER_API_KEY` y `OPENROUTER_MODEL` configurables en `config/.env`).
+- Widget de chat flotante integrado para estudiantes y tutores que resuelve dudas académicas y orienta en el uso de la plataforma.
 
 ---
 
@@ -84,13 +90,15 @@ TutoresOn-Line/
 │   ├── auth.php                    # Control de sesiones, roles RBAC y tokens persistentes
 │   ├── oauth_google.php            # Integración nativa Google OAuth 2.0 (cURL y Streams)
 │   ├── archivos.php                # Validación MIME (finfo) y subida segura
-│   ├── correo.php                  # Despachador de emails (modo log y SMTP)
+│   ├── correo.php                  # Despachador de emails (SMTP nativo + log) y plantillas de reserva
+│   ├── mailer.php                  # Alias del despachador de correos (incluye correo.php)
 │   ├── header.php                  # Barra de navegación responsiva y mensajes flash
 │   └── footer.php                  # Cierre semántico y scripts de Bootstrap 5
 ├── api/                            # Endpoints REST JSON
 │   ├── buscar_tutores.php          # Búsqueda multicriterio con promedios reales
-│   ├── reservar.php                # Agendamiento seguro de sesiones
-│   ├── solicitudes.php             # Gestión de estados (aceptar / rechazar / finalizar)
+│   ├── reservar.php                # Agendamiento seguro de sesiones + notificación por correo
+│   ├── solicitudes.php             # Gestión de estados, enlace Jitsi Meet y notificación
+│   ├── chat_ia.php                 # Asistente conversacional con IA vía OpenRouter
 │   ├── disponibilidad.php          # Horarios semanales del tutor
 │   ├── chat_conversaciones.php     # Gestión de conversaciones de chat
 │   ├── chat_mensajes.php           # Polling incremental de mensajes
@@ -144,7 +152,7 @@ TutoresOn-Line/
    DB_USER=root
    DB_PASS=usbw
 
-   MAIL_DRIVER=log
+   MAIL_DRIVER=smtp
    ```
 
 ### 3. Importación de la Base de Datos
@@ -172,15 +180,23 @@ La contraseña universal para todas las cuentas de prueba iniciales es: **`passw
 
 ---
 
-## 📧 Pruebas de Correo en Desarrollo Local
+## 📧 Pruebas de Correo (SMTP y Respaldo Local)
 
-Para facilitar pruebas sin requerir un servidor SMTP externo con internet, el sistema utiliza el driver `MAIL_DRIVER=log`.
-
-Al registrar una cuenta nueva o solicitar restablecer la contraseña, el sistema escribe el enlace de activación o reseteo en:
+El sistema utiliza `MAIL_DRIVER=smtp` (compatible con **Gmail usando contraseña de aplicación** o **Mailtrap** configurando `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER` y `SMTP_PASS` en `config/.env`). Adicionalmente, para facilitar pruebas y demostraciones sin conexión SMTP activa, siempre guarda una copia en:
 ```text
 logs/mail.log
 ```
-Basta con abrir ese archivo, copiar la URL generada y pegarla en el navegador para activar la cuenta o cambiar la contraseña inmediatamente.
+Basta con abrir ese archivo, copiar la URL generada (activación, recuperación, o enlace Jitsi Meet de tutoría aceptada) y probarla inmediatamente en el navegador.
+
+---
+
+## 👥 Equipo de Desarrollo (SCRUM)
+
+- **Product Owner:** Profesor Edgar Morillo
+- **Líder Técnico / Scrum Master & Full-Stack:** Jesús David Ayala Noche (`Jeyfar`)
+- **Desarrollador Backend & API RESTful:** Ricardo Jesús Cudriz González
+- **Desarrollador Frontend & UI/UX:** Steven Manuel Yépez Navarro
+- **Ingeniero QA, Seguridad & Documentación:** Yojaner Sanjuan
 
 ---
 
@@ -188,4 +204,4 @@ Basta con abrir ese archivo, copiar la URL generada y pegarla en el navegador pa
 
 Este proyecto está bajo la **Licencia MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
 
-Copyright (c) 2026 **Jeyfar**.
+Copyright (c) 2026 **Jesús David Ayala Noche (Jeyfar)** y Equipo TutoresOnLine.

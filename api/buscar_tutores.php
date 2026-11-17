@@ -48,7 +48,7 @@ try {
 
     $where = implode(' AND ', $condiciones);
 
-    $sql = "SELECT u.id, u.nombre, u.ciudad, u.foto,
+    $sql = "SELECT u.id, u.nombre, u.ciudad, u.foto, u.descripcion,
                    COALESCE(GROUP_CONCAT(DISTINCT m.nombre ORDER BY m.nombre SEPARATOR ', '), 'Especialidades por definir') AS materias_texto,
                    COALESCE(MIN(tm.tarifa_hora), 0) AS tarifa_min,
                    COALESCE(MAX(tm.tarifa_hora), 0) AS tarifa_max,
@@ -59,7 +59,7 @@ try {
             LEFT JOIN materias m ON m.id = tm.materia_id
             LEFT JOIN calificaciones c ON c.tutor_id = u.id
             WHERE {$where}
-            GROUP BY u.id, u.nombre, u.ciudad, u.foto
+            GROUP BY u.id, u.nombre, u.ciudad, u.foto, u.descripcion
             ORDER BY total_calificaciones DESC, calificacion DESC, u.nombre ASC";
 
     $stmt = $pdo->prepare($sql);
@@ -83,6 +83,7 @@ try {
             'nombre' => $t['nombre'],
             'ciudad' => $t['ciudad'] ?: 'Colombia',
             'foto' => $foto_url,
+            'descripcion' => $t['descripcion'] ?: '',
             'materias' => $t['materias_texto'],
             'tarifa_min' => (float)$t['tarifa_min'],
             'tarifa_max' => (float)$t['tarifa_max'],

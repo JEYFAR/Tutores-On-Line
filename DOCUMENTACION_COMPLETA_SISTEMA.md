@@ -1,10 +1,13 @@
-# TutoresOnLine - Memoria Técnica y Documentación Arquitectónica Integral
+# TutoresOnLine - Manual del Programador y Documentación Arquitectónica del Sistema
 
-> **Documento:** Especificación Técnica y Arquitectónica del Sistema  
-> **Proyecto:** TutoresOnLine - Plataforma de Tutorías Académicas  
-> **Versión:** 2.4.0 (Octubre 2026)  
-> **Entorno:** USBWebserver (Apache 2.4 / PHP 7.4.x / MySQL 5.7 InnoDB)  
-> **Tecnologías:** PHP 7.4 puro (PDO), MySQL 5.7 (utf8mb4_unicode_ci), Bootstrap 5.3 CDN, Vue.js 3 CDN  
+> **Documento:** Manual del Programador / Especificación Técnica del Sistema  
+> **Proyecto:** TutoresOnLine - Plataforma Integral de Tutorías Académicas (Proyecto Final)  
+> **Product Owner:** Profesor Edgar Morillo  
+> **Líder Técnico / Scrum Master:** Jesús David Ayala Noche (`Jeyfar`)  
+> **Equipo de Desarrollo:** Ricardo Jesús Cudriz González, Steven Manuel Yépez Navarro, Yojaner Sanjuan  
+> **Versión:** 3.0.0 (Noviembre 2026)  
+> **Entorno:** Apache 2.4 / PHP 7.4+ / MySQL 5.7+ InnoDB (Compatible con USBWebserver, XAMPP y Hosting Cloud)  
+> **Tecnologías:** PHP 7.4+ puro (PDO), MySQL 5.7 (`utf8mb4_unicode_ci`), Bootstrap 5.3 CDN, Vue.js 3 CDN, Jitsi Meet IFrame API, OpenRouter AI API  
 
 ---
 
@@ -112,7 +115,7 @@ La plataforma implementa un patrón **Front Controller Modular Liviano** complem
 El esquema `tutoresonline` cuenta con **14 tablas relacionales** diseñadas bajo Tercera Forma Normal (3FN):
 
 ### 4.1. `usuarios` (Entidad Central)
-Almacena credenciales, roles y datos de perfil.
+Almacena credenciales, roles, presentación profesional y datos de perfil.
 - `id` (INT UNSIGNED, PK, AUTO_INCREMENT): Identificador unívoco.
 - `nombre` (VARCHAR 100, NOT NULL): Nombre del usuario.
 - `correo` (VARCHAR 150, NOT NULL, UNIQUE): Email corporativo o personal.
@@ -120,6 +123,7 @@ Almacena credenciales, roles y datos de perfil.
 - `rol` (ENUM('estudiante','tutor'), NOT NULL): Rol de autorización.
 - `ciudad` (VARCHAR 100, NULL): Ciudad de residencia.
 - `foto` (VARCHAR 255, NULL): Nombre del archivo de avatar en disco.
+- `descripcion` (TEXT, NULL): Biografía académica, experiencia y metodología de enseñanza del tutor.
 - `correo_verificado` (TINYINT 1, DEFAULT 0): Estado de activación de la cuenta.
 - `creado_en` (DATETIME, DEFAULT CURRENT_TIMESTAMP): Fecha de registro.
 
@@ -146,7 +150,7 @@ Tabla ternaria que define qué imparte el tutor, a qué nivel y a qué precio.
 - `hora_inicio` (TIME), `hora_fin` (TIME).
 - `modalidad` (ENUM('virtual','presencial'), DEFAULT 'virtual').
 
-### 4.6. `sesiones` (Gestión de Reservas de Clases)
+### 4.6. `sesiones` (Gestión de Reservas de Clases y Salas de Videollamada)
 - `id` (INT UNSIGNED, PK, AUTO_INCREMENT).
 - `estudiante_id` (INT UNSIGNED, FK -> `usuarios.id` ON DELETE CASCADE).
 - `tutor_id` (INT UNSIGNED, FK -> `usuarios.id` ON DELETE CASCADE).
@@ -155,6 +159,7 @@ Tabla ternaria que define qué imparte el tutor, a qué nivel y a qué precio.
 - `hora_inicio` (TIME), `hora_fin` (TIME).
 - `modalidad` (ENUM('virtual','presencial')).
 - `estado` (ENUM('pendiente','aceptada','rechazada','finalizada'), DEFAULT 'pendiente').
+- `enlace_videollamada` (VARCHAR 255, NULL): Token criptográfico único de la sala virtual (`TutoresOnLine_Sala_{id}_{24_hex}`); se genera al aceptar y se autodestruye (`NULL`) al finalizar o rechazar la clase.
 - `creado_en` (DATETIME, DEFAULT CURRENT_TIMESTAMP).
 
 ### 4.7. `calificaciones` (Reputación y Reseñas)
@@ -302,6 +307,30 @@ La tabla `intentos_login` audita cada acceso fallido por IP y correo. La rutina 
 - Transmisión mínima de datos: El servidor solo devuelve registros con ID superior al último mensaje recibido por el cliente.
 - Validación estricta de pertenencia al hilo para evitar acceso a conversaciones ajenas.
 
+### 6.6. Sala Privada de Videoconferencia Integrada (`videollamada.php`)
+- **Cómo se programó técnicamente:**
+  1. **Generación de Token Criptográfico:** Al aceptar una solicitud (`panel.php` o `api/solicitudes.php`), se genera un identificador impredecible mediante `bin2hex(random_bytes(12))` (`TutoresOnLine_Sala_{id}_{24_hex}`) y se almacena en `sesiones.enlace_videollamada`.
+  2. **Control de Acceso (RBAC + Ownership):** `public/videollamada.php` exige sesión iniciada (`requiere_login()`) y comprueba que `$_SESSION['usuario_id']` coincida estrictamente con `estudiante_id` o `tutor_id` de esa reserva y que `estado === 'aceptada'`. Cualquier tercero recibe `HTTP 403`.
+  3. **Integración Embebida con Credenciales:** Se instancia `JitsiMeetExternalAPI` (`https://meet.jit.si/external_api.js`) dentro de `#contenedorVideollamada`, inyectando automáticamente `displayName` (nombre real y rol del usuario autenticado), `email` y `subject` (nombre de la asignatura).
+  4. **Temporizador y Autodestrucción de Sala:** Un reloj regresivo en vivo calcula los segundos restantes según `hora_inicio` y `hora_fin`. Al llegar a `00:00` o al pulsar **"Finalizar y Cerrar Sala"**, ejecuta `UPDATE sesiones SET estado = 'finalizada', enlace_videollamada = NULL`, destruyendo definitivamente el token de la reunión.
+
+### 6.7. Motor de Notificaciones por Correo SMTP Nativo (`includes/correo.php` / `includes/mailer.php`)
+- **Cómo se programó técnicamente:**
+  1. **Cliente SMTP sobre Sockets Nativos:** Para no depender de Composer ni de la función `mail()` desconfigurada en Windows, `enviar_por_smtp_nativo()` abre una conexión TCP/TLS con `stream_socket_client()`, negocia `EHLO`, activa cifrado `STARTTLS` con `stream_socket_enable_crypto()` (TLS 1.2/1.3), autentica con `AUTH LOGIN` en Base64 y transmite el cuerpo HTML codificado en UTF-8.
+  2. **Respaldo Garantizado en `logs/mail.log`:** Cada correo enviado (o cuando se trabaja sin internet en entorno local) queda registrado con fecha, destinatario, asunto y enlace de acción directo en `logs/mail.log`.
+  3. **Disparadores de Negocio:** `notificar_reserva_creada()` avisa al tutor y al estudiante al agendar una clase; `notificar_cambio_estado_sesion()` notifica al estudiante cuando el tutor acepta (incluyendo el enlace directo a `videollamada.php?id={id}`) o rechaza la solicitud.
+
+### 6.8. Asistente Académico con IA Generativa (`api/chat_ia.php` + Widget en `includes/footer.php`)
+- **Cómo se programó técnicamente:**
+  1. **Transporte HTTP en 3 Niveles (`ejecutar_post_openrouter`):** Como entornos ligeros tipo USBWebserver pueden no tener activa la extensión `php_curl`, el endpoint intenta automáticamente: (1) `cURL`, (2) Streams HTTP nativos (`file_get_contents` + `stream_context_create`) y (3) Socket TLS directo (`stream_socket_client('ssl://openrouter.ai:443')`) con decodificación `chunked`.
+  2. **Inyección de Contexto Real (RAG Ligero):** `construir_system_prompt()` consulta en vivo el catálogo de tutores verificados, sus materias, niveles, ciudades y tarifas en COP/hora, inyectándolos junto con el nombre y rol del usuario en el mensaje `system`.
+  3. **Tolerancia a Fallos de Modelo:** Intenta primero con el modelo configurado en `.env` (`OPENROUTER_MODEL=deepseek/deepseek-v4.1-flash`) y, si el proveedor devuelve error de disponibilidad, reintenta en transparente con `deepseek/deepseek-chat` y `openrouter/auto`.
+
+### 6.9. Aplicación de Principios SOLID y Buenas Prácticas
+- **S — Single Responsibility Principle (Responsabilidad Única):** Cada archivo en `/includes/` tiene una única razón de cambio: `conexion.php` gestiona exclusivamente la instancia PDO y migraciones; `seguridad.php` concentra criptografía, CSRF, XSS y rate-limiting; `auth.php` maneja autenticación y sesiones; `correo.php` encapsula el transporte SMTP; `archivos.php` valida y persiste subidas binarias.
+- **O — Open/Closed Principle (Abierto/Cerrado):** El despachador de correos (`correo.php`) y el cliente de IA (`api/chat_ia.php`) permiten agregar nuevos drivers o modelos mediante variables de entorno (`.env`) sin modificar el código que los invoca.
+- **D — Dependency Inversion / Inyección de Dependencias:** Las funciones de servicio como `notificar_reserva_creada(PDO $pdo, $sesion_id)` reciben la abstracción `PDO` inyectada en lugar de acoplarse a conexiones globales.
+
 ---
 
 ## 7. Especificación Formal de la API RESTful
@@ -312,11 +341,12 @@ Todas las rutas retornan JSON con cabecera `Content-Type: application/json; char
 |---|---|---|---|---|
 | `/api/buscar_tutores.php` | `GET` | Pública | `materia`, `nivel_id`, `ciudad`, `modalidad` | `{ exito: true, total: N, tutores: [...] }` |
 | `/api/reservar.php` | `POST` | Estudiante | `tutor_id`, `materia_id`, `fecha`, `hora_inicio`, `hora_fin`, `modalidad`, `csrf_token` | `{ exito: true, mensaje: "...", sesion_id: N }` |
-| `/api/solicitudes.php` | `POST` | Tutor | `sesion_id`, `accion` ('aceptar'/'rechazar'/'finalizar'), `csrf_token` | `{ exito: true, mensaje: "...", nuevo_estado: "..." }` |
+| `/api/solicitudes.php` | `POST` | Tutor | `sesion_id`, `accion` ('aceptar'/'rechazar'/'finalizar'), `csrf_token` | `{ exito: true, nuevo_estado: "...", enlace_videollamada: "..." }` |
 | `/api/disponibilidad.php` | `GET/POST` | Tutor / Pública | GET: `tutor_id` \| POST: `dia_semana`, `hora_inicio`, `hora_fin`, `modalidad` | `{ exito: true, disponibilidad: [...] }` |
 | `/api/chat_conversaciones.php` | `GET/POST` | Requerida | GET: Ninguno \| POST: `contacto_id`, `csrf_token` | `{ exito: true, conversaciones: [...] }` |
 | `/api/chat_mensajes.php` | `GET` | Participante | `conversacion_id`, `desde_id` (opcional) | `{ exito: true, mensajes: [...], total: N }` |
 | `/api/chat_enviar.php` | `POST` | Participante | `conversacion_id`, `texto`, `csrf_token` | `{ exito: true, mensaje: { id: N, ... } }` |
+| `/api/chat_ia.php` | `POST` | Requerida | `mensaje`, `historial`, `csrf_token` | `{ exito: true, respuesta: "..." }` |
 
 ---
 
@@ -370,6 +400,7 @@ TutoresOn-Line/
     ├── panel.php                   # Dashboard unificado adaptativo
     ├── perfil.php                  # Perfil universal multifunción
     ├── chat.php                    # Interfaz de mensajería instantánea
+    ├── videollamada.php            # Sala privada embebida con control de acceso y temporizador
     ├── reservar.php                # Formulario de agendamiento
     ├── css/estilos.css             # Estilos y micro-animaciones personalizadas
     └── uploads/                    # Archivos subidos con ejecución PHP deshabilitada
@@ -377,21 +408,31 @@ TutoresOn-Line/
 
 ---
 
-## 9. Guía de Despliegue, Instalación y Operación
+## 9. Guía de Despliegue (Local y Producción en la Nube)
 
 ### 9.1. Requisitos
 - Servidor Web Apache 2.4 con módulo `mod_rewrite`.
-- PHP 7.4 o superior con extensiones `pdo_mysql`, `fileinfo`, `json`, `session` activas.
+- PHP 7.4 o superior con extensiones `pdo_mysql`, `fileinfo`, `json`, `session` activas (`curl` opcional, cuenta con fallback nativo por streams y sockets TLS).
 - MySQL 5.7 o superior / MariaDB 10.2+.
 
-### 9.2. Pasos de Instalación
-1. Clonar o descomprimir el proyecto en el directorio raíz de Apache (ej. `C:\USBWebserver\root\tutoresonline`).
-2. Copiar `config/.env.example` como `config/.env` y verificar credenciales de base de datos (`root` / `usbw`).
+### 9.2. Despliegue en Entorno Local (USBWebserver / XAMPP)
+1. Clonar o descomprimir el proyecto en el directorio raíz de Apache (`C:\USBWebserver\root\tutoresonline` o `C:\xampp\htdocs\tutoresonline`).
+2. Copiar `config/.env.example` como `config/.env` y ajustar credenciales (`DB_USER=root`, `DB_PASS=usbw` o vacío en XAMPP, `OPENROUTER_API_KEY`).
 3. Importar en phpMyAdmin (`http://localhost/phpmyadmin`):
    - Primero: `database/schema.sql`
    - Segundo: `database/datos_prueba.sql`
-4. Asegurar permisos de escritura en las carpetas `logs/` y `public/uploads/`.
-5. Abrir el navegador en `http://localhost/tutoresonline/public/`.
+4. Abrir el navegador en `http://localhost/tutoresonline/public/`.
+
+### 9.3. Despliegue en Producción (Hosting Cloud / cPanel / Hostinger / InfinityFree)
+1. Crear una base de datos MySQL desde el panel del hosting e importar `database/schema.sql` y `database/datos_prueba.sql` desde phpMyAdmin.
+2. Subir los archivos del repositorio por FTP/SFTP o Administrador de Archivos (`config/`, `includes/` y `logs/` quedan protegidos por sus archivos `.htaccess` con `Deny from all`).
+3. Configurar `config/.env` con los valores de producción:
+   - `APP_ENV=production` y `APP_DEBUG=false`
+   - `APP_URL=https://tu-dominio.com/public`
+   - `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` entregados por el proveedor de hosting.
+   - `MAIL_DRIVER=smtp` con las credenciales de Gmail (Contraseña de Aplicación) o SMTP del dominio.
+   - `OPENROUTER_API_KEY` con la llave de producción.
+4. Verificar que el certificado SSL (HTTPS Let's Encrypt) esté activo para habilitar automáticamente la directiva `Secure` en cookies de sesión y permisos de cámara/micrófono WebRTC en `videollamada.php`.
 
 ### 9.3. Cuentas de Prueba Preconfiguradas (Clave: `password123`)
 - **Estudiante:** `carlos.estudiante@ejemplo.com` (Agendar tutorías y chatear).

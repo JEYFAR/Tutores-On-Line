@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TutoresOnLine - Documentación Técnica y Arquitectónica Integral</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap');
+
+        :root {
+            --primary: #1e40af;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e3a8a;
+            --secondary: #0d9488;
+            --dark: #0f172a;
+            --gray-dark: #334155;
+            --gray: #64748b;
+            --gray-light: #f1f5f9;
+            --border: #e2e8f0;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --card-bg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--gray-dark);
+            background-color: #ffffff;
+            line-height: 1.65;
+            font-size: 13.5px;
+        }
+
+        @page {
+            size: letter;
+            margin: 18mm 16mm 18mm 16mm;
+            @bottom-right {
+                content: "Página " counter(page);
+                font-size: 10px;
+                color: var(--gray);
+            }
+        }
+
+        @media print {
+            body {
+                background: #ffffff;
+                color: #000000;
+                font-size: 12.5px;
+            }
+            .page-break {
+                page-break-after: always;
+                break-after: page;
+            }
+            .no-break {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            .cover-page {
+                height: 100vh;
+                page-break-after: always;
+            }
+            a {
+                text-decoration: none;
+                color: var(--primary-dark);
+            }
+            th {
+                background-color: #f1f5f9 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .badge, .alert, .card-box {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        /* PORTADA */
+        .cover-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 94vh;
+            padding: 40px 30px;
+            background: linear-gradient(145deg, #0f172a 0%, #1e3a8a 50%, #0369a1 100%);
+            color: #ffffff;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .cover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            padding-bottom: 20px;
+        }
+
+        .cover-badge {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+
+        .cover-title-container {
+            margin: auto 0;
+            padding: 40px 0;
+        }
+
+        .cover-title {
+            font-size: 38px;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.5px;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .cover-subtitle {
+            font-size: 18px;
+            font-weight: 300;
+            color: #cbd5e1;
+            max-width: 650px;
+            line-height: 1.4;
+            margin-bottom: 25px;
+        }
+
+        .cover-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            background: rgba(15, 23, 42, 0.45);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .cover-meta-item strong {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 3px;
+        }
+
+        .cover-meta-item span {
+            font-size: 13px;
+            color: #f8fafc;
+            font-weight: 500;
+        }
+
+        .cover-footer {
+            border-top: 1px solid rgba(255,255,255,0.15);
+            padding-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        /* CONTENIDO Y TIPOGRAFÍA */
+        h1, h2, h3, h4, h5 {
+            color: var(--dark);
+            font-weight: 700;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            line-height: 1.25;
+        }
+
+        h1 {
+            font-size: 22px;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 6px;
+            margin-top: 30px;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        h2 {
+            font-size: 17px;
+            color: var(--dark);
+            border-left: 4px solid var(--secondary);
+            padding-left: 10px;
+            margin-top: 20px;
+        }
+
+        h3 {
+            font-size: 14.5px;
+            color: var(--gray-dark);
+            margin-top: 16px;
+        }
+
+        p {
+            margin-bottom: 10px;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        li {
+            margin-bottom: 4px;
+        }
+
+        strong {
+            color: var(--dark);
+        }
+
+        /* TABLAS */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0 20px 0;
+            font-size: 12px;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: var(--gray-light);
+            font-weight: 600;
+            color: var(--dark);
+            text-transform: uppercase;
+            font-size: 10.5px;
+            letter-spacing: 0.5px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        /* CÓDIGO */
+        code {
+            font-family: 'Fira Code', monospace;
+            background-color: #f1f5f9;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 11.5px;
+            color: #be185d;
+        }
+
+        pre {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 12px 14px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 12px 0 16px 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            line-height: 1.5;
+            border: 1px solid #1e293b;
+        }
+
+        pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: inherit;
+        }
+
+        /* CAJAS Y ALERTAS */
+        .card-box {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin: 14px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .alert {
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin: 12px 0;
+            font-size: 12px;
+            border-left: 4px solid transparent;
+        }
+
+        .alert-info {
+            background-color: #eff6ff;
+            border-color: var(--primary-light);
+            color: #1e40af;
+        }
+
+        .alert-success {
+            background-color: #f0fdf4;
+            border-color: var(--success);
+            color: #166534;
+        }
+
+        .alert-warning {
+            background-color: #fffbeb;
+            border-color: var(--warning);
+            color: #92400e;
+        }
+
+        .alert-danger {
+            background-color: #fef2f2;
+            border-color: var(--danger);
+            color: #991b1b;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10.5px;
+            font-weight: 600;
+        }
+
+        .badge-primary { background: #dbeafe; color: #1e40af; }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-secondary { background: #f1f5f9; color: #475569; }
+
+        .toc-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .toc-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 6px 0;
+            border-bottom: 1px dotted var(--border);
+        }
+
+        .toc-number {
+            font-weight: 700;
+            color: var(--primary);
+            margin-right: 8px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin: 12px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========================================================================= -->
+    <!-- PORTADA                                                                   -->
+    <!-- ========================================================================= -->
+    <div class="cover-page">
+        <div class="cover-header">
+            <div style="font-size: 20px; font-weight: 800; letter-spacing: -0.5px;">Tutores<span style="color: #60a5fa;">OnLine</span></div>
+            <div class="cover-badge">Documento Técnico de Arquitectura</div>
+        </div>
+
+        <div class="cover-title-container">
+            <div class="cover-title">MEMORIA TÉCNICA Y ESPECIFICACIÓN ARQUITECTÓNICA DE SISTEMA</div>
+            <div class="cover-subtitle">
+                Plataforma Web Integral para la Gestión de Tutorías Académicas, Búsqueda Inteligente de Docentes, Agendamiento de Clases, Calificaciones y Mensajería Instantánea.
+            </div>
+
+            <div class="cover-meta-grid">
+                <div class="cover-meta-item">
+                    <strong>Scrum Master / Líder Técnico</strong>
+                    <span>Jesús David Ayala Noche (Jeyfar)</span>
+                </div>
+                <div class="cover-meta-item">
+                    <strong>Equipo de Desarrollo &amp; Product Owner</strong>
+                    <span>Ricardo J. Cudriz, Steven M. Yépez, Yojaner Sanjuan &bull; PO: Prof. Edgar Morillo</span>
+                </div>
+                <div class="cover-meta-item">
+                    <strong>Stack Tecnológico</strong>
+                    <span>PHP 7.4+ (PDO), MySQL 5.7 InnoDB, Bootstrap 5, Vue 3 CDN, OpenRouter IA</span>
+                </div>
+                <div class="cover-meta-item">
+                    <strong>Criptografía &amp; Hardening</strong>
+                    <span>Bcrypt (Cost 12) + Pepper, Selector:Validador SHA-256, CSRF Hash-Equals, MIME finfo</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="cover-footer">
+            <div>Confidencial &bull; Documentación de Ingeniería de Software</div>
+            <div>Entorno: USBWebserver / Apache 2.4 / PHP 7.4.x / MySQL 5.7</div>
+        </div>
+    </div>
+
+    <!-- SALTO DE PÁGINA -->
+    <div class="page-break"></div>
+
+    <!-- ========================================================================= -->
+    <!-- TABLA DE CONTENIDO                                                        -->
+    <!-- ========================================================================= -->
+    <h1>1. Estructura y Tabla de Contenidos</h1>
+    <div class="card-box">
+        <ul class="toc-list">
+            <li class="toc-item"><span class="toc-title"><span class="toc-number">1.</span> Estructura y Tabla de Contenidos</span></li>
+            <li class="toc-item"><span class="toc-title"><span class="toc-number">2.</span> Resumen Ejecutivo y Objetivos del Sistema</span></li>
+            <li class="toc-item"><span class="toc-title"><span class="toc-number">3.</span> Arquitectura Global del Software y Principios de Diseño</span></li>
+            <li class="toc-item"><span class="toc-title"><span class="toc-number">4.</span> Stack Tecnológico y Justificación de Componentes</span></li>
+            <li class="toc-item"><span class="toc-title"><span class="toc-number">5.</span> Modelo de Datos y Diccionario Relacional Completo (14 Tablas)</span></li>
+            <li class="toc-item"><span class="toc-title"><span class="toc-number">6.</span> Arquitectura de Seguridad, Criptografía y Endurecimiento (Hardening)</span></li>
+            <li class="toc-item"><span class="toc-title"><span class="toc-number">7.</span> Módulos del Sistema y Flujos Funcionales Detallados</span></li>
+            <li class="toc-item"><span class="toc-title"><span class="toc-number">8.</span> Especificación Formal de la API RESTful Interna</span></li>
+            <li class="toc-item"><span class="toc-title"><span class="toc-number">9.</span> Estructura Física del Repositorio y Roles de Archivos</span></li>
+            <li class="toc-item"><span class="toc-title"><span class="toc-number">10.</span> Guía de Despliegue, Instalación y Operación</span></li>
+            <li class="toc-item"><span class="toc-title"><span class="toc-number">11.</span> Matriz de Casos de Prueba y Validaciones de Seguridad</span></li>
+            <li class="toc-item"><span class="toc-title"><span class="toc-number">12.</span> Conclusiones y Hoja de Ruta de Escalabilidad</span></li>
+        </ul>
+    </div>
+
+    <h1>2. Resumen Ejecutivo y Objetivos del Sistema</h1>
+    <p>
+        <strong>TutoresOnLine</strong> es una solución de software web orientada a la democratización y optimización de las tutorías académicas personalizadas, conectando a estudiantes de básica, secundaria y educación superior con tutores profesionales cualificados. La plataforma mitiga la fricción tradicional en la contratación de profesores particulares al proporcionar un entorno seguro con tarifas transparentes, verificación de disponibilidad en tiempo real, reserva formal de sesiones, sistema de calificaciones auditado y un canal de comunicación directo y confidencial.
+    </p>
+    <div class="grid-2">
+        <div class="card-box">
+            <h4 style="color: var(--primary); margin-top: 0;">Objetivos para Estudiantes</h4>
+            <ul>
+                <li>Búsqueda reactiva mediante filtros multicriterio (materia, ciudad, nivel y modalidad).</li>
+                <li>Acceso a perfiles transparentes con tarifas por hora y reseñas reales comprobables.</li>
+                <li>Agendamiento formal y seguimiento en vivo del ciclo de vida de la clase.</li>
+                <li>Comunicación bidireccional mediante mensajería integrada sin exponer números telefónicos.</li>
+                <li>Calificación honesta y emisión de comentarios tras la culminación de la clase.</li>
+            </ul>
+        </div>
+        <div class="card-box">
+            <h4 style="color: var(--secondary); margin-top: 0;">Objetivos para Tutores</h4>
+            <ul>
+                <li>Control total sobre el catálogo de especialidades impartidas y tarifas asociadas por nivel.</li>
+                <li>Definición flexible de franjas horarias semanales y modalidad (virtual o presencial).</li>
+                <li>Bandeja de gestión de solicitudes con facultades para aceptar, rechazar o finalizar tutorías.</li>
+                <li>Gestión de credenciales con subida validada de Hoja de Vida en PDF y fotografía de perfil.</li>
+                <li>Construcción de reputación profesional mediante calificaciones objetivas.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SALTO DE PÁGINA -->
+    <div class="page-break"></div>
+
+    <h1>3. Arquitectura Global del Software y Principios de Diseño</h1>
+    <p>
+        La arquitectura de <strong>TutoresOnLine</strong> sigue un patrón arquitectónico híbrido de <em>Controlador Frontal Liviano y Módulos de Servicios Orientados a Procedimientos Seguros</em>, desacoplado de dependencias o frameworks externos pesados para garantizar compatibilidad estricta con entornos compartidos (como USBWebserver, XAMPP o cPanel en PHP 7.4+).
+    </p>
+
+    <div class="card-box">
+        <h4 style="margin-top: 0; color: var(--dark);">Diagrama de Capas de la Arquitectura</h4>
+        <pre><code>+-----------------------------------------------------------------------------------+
+|                            CAPA DE PRESENTACIÓN (CLIENTE)                         |
+|   Bootstrap 5 (UI/Grid/Components)  |  Vue.js 3 (Reactividad/Filtros/Chat Polling) |
+|   Vanilla JavaScript Async Fetch API  |  Bootstrap Icons SVG Font                 |
++-----------------------------------------------------------------------------------+
+                                        |  (Peticiones HTTP / HTTPS / JSON Fetch)
+                                        v
++-----------------------------------------------------------------------------------+
+|                        CAPA DE ENRUTAMIENTO Y ACCESO PÚBLICO                      |
+|   /public/index.php, /public/login.php, /public/registro.php, /public/buscar.php  |
+|   /public/panel.php (Dashboard Universal), /public/perfil.php (Perfil Dual)       |
+|   /public/chat.php (Interfaz de Mensajería)                                      |
++-----------------------------------------------------------------------------------+
+                                        |  (Invocación de Servicios y Control de Acceso)
+                                        v
++-----------------------------------------------------------------------------------+
+|                        CAPA DE CONTROLADORES DE API (REST JSON)                   |
+|   /api/buscar_tutores.php  |  /api/reservar.php  |  /api/solicitudes.php          |
+|   /api/chat_conversaciones.php  |  /api/chat_mensajes.php  |  /api/chat_enviar.php |
++-----------------------------------------------------------------------------------+
+                                        |  (Inclusión / Delegación de Lógica Transversal)
+                                        v
++-----------------------------------------------------------------------------------+
+|                         CAPA CENTRAL DE SERVICIOS (/includes/)                    |
+|   seguridad.php   : CSRF, XSS, Hardening Headers, Bcrypt+Pepper, Rate Limiter     |
+|   auth.php        : Control de Roles (RBAC), Sesión Atada a UA, Cookies Recordar  |
+|   oauth_google.php: Flujo OAuth2 Nativo con Google (cURL & Streams Fallback)      |
+|   archivos.php    : Inspección MIME Binaria (finfo), Hash Hexadecimal, Uploads    |
+|   correo.php      : Envío de Emails (Modo Transaccional & Modo Log Local)         |
+|   conexion.php    : Singleton PDO (Prepared Statements, Emulación Desactivada)    |
++-----------------------------------------------------------------------------------+
+                                        |  (Mapeo de Datos SQL / Transacciones)
+                                        v
++-----------------------------------------------------------------------------------+
+|                        CAPA DE PERSISTENCIA (BASE DE DATOS)                       |
+|   MySQL 5.7 / MariaDB 10.2+ | Motor InnoDB | Cotejamiento utf8mb4_unicode_ci      |
+|   14 Tablas Relacionales | Integridad Referencial con ON DELETE CASCADE / RESTRICT |
++-----------------------------------------------------------------------------------+</code></pre>
+    </div>
+
+    <h2>3.1. Principios de Diseño Aplicados</h2>
+    <ul>
+        <li><strong>Defensa en Profundidad (Defense in Depth):</strong> La seguridad no recae en un único punto. Se valida en cliente con HTML5/JS, se verifica en el controlador, se autoriza en la capa de sesión mediante tokens criptográficos y se fuerza en la base de datos con restricciones de unicidad y claves foráneas.</li>
+        <li><strong>Principio de Menor Privilegio (PoLP):</strong> El acceso a recursos y endpoints está estrictamente segmentado por roles (<code>estudiante</code> vs <code>tutor</code>). Un estudiante no puede ejecutar acciones de tutor (como aceptar solicitudes o registrar tarifas), y un tutor no puede solicitarse clases a sí mismo ni auto-calificarse.</li>
+        <li><strong>Falla Segura (Fail-Safe Defaults):</strong> En caso de excepciones de base de datos o fallos de subida de archivos, se ejecutan automáticamente rollbacks transaccionales de PDO y se eliminan físicamente del disco los archivos huérfanos.</li>
+        <li><strong>Cero Dependencias de Construcción (Zero Build Steps):</strong> El proyecto no requiere Node.js, Webpack, Vite ni Composer para su ejecución en producción. Utiliza Vue 3 y Bootstrap 5 a través de CDNs, garantizando un despliegue inmediato con solo copiar archivos.</li>
+    </ul>
+
+    <!-- SALTO DE PÁGINA -->
+    <div class="page-break"></div>
+
+    <h1>4. Stack Tecnológico y Justificación de Componentes</h1>
+    <p>
+        La selección de tecnologías responde a la necesidad de máxima portabilidad, alta eficiencia en el consumo de memoria del servidor, facilidad de instalación en entornos educativos y excelente experiencia de usuario interactiva.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Componente</th>
+                <th>Tecnología / Versión</th>
+                <th>Rol en la Arquitectura</th>
+                <th>Justificación Técnica</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Lenguaje Servidor</strong></td>
+                <td>PHP 7.4+ puro</td>
+                <td>Lógica de negocio, APIs y renderizado</td>
+                <td>Soporte universal en cualquier hosting, tipado en funciones, manejo nativo de sesiones y alto rendimiento sin sobrecarga de frameworks.</td>
+            </tr>
+            <tr>
+                <td><strong>Acceso a Datos</strong></td>
+                <td>PHP Data Objects (PDO)</td>
+                <td>Abstracción de BD y consultas</td>
+                <td>Manejo de consultas preparadas nativas (<code>ATTR_EMULATE_PREPARES => false</code>), protegiendo contra inyecciones SQL de primer y segundo orden.</td>
+            </tr>
+            <tr>
+                <td><strong>Base de Datos</strong></td>
+                <td>MySQL 5.7+ (InnoDB)</td>
+                <td>Persistencia relacional</td>
+                <td>Garantía de cumplimiento ACID, transacciones robustas, llaves foráneas con eliminación en cascada y soporte de emojis con <code>utf8mb4</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Framework CSS</strong></td>
+                <td>Bootstrap 5.3 (CDN)</td>
+                <td>Diseño responsivo y componentes</td>
+                <td>Sistema de rejilla flexible (Flexbox), componentes accesibles sin requerir jQuery y personalización limpia mediante CSS variables.</td>
+            </tr>
+            <tr>
+                <td><strong>Reactividad Front</strong></td>
+                <td>Vue.js 3 (Global Build CDN)</td>
+                <td>Buscador y Chat en tiempo real</td>
+                <td>Reactividad declarativa sin necesidad de compilación (Node/NPM), enlazado bidireccional reactivo con <code>v-model</code> y renderizado ultrarrápido.</td>
+            </tr>
+            <tr>
+                <td><strong>Protocolo OAuth</strong></td>
+                <td>Google OAuth 2.0</td>
+                <td>Autenticación federada</td>
+                <td>Permite el inicio de sesión con cuentas de Google oficiales mediante intercambio de código de autorización (Authorization Code Grant).</td>
+            </tr>
+            <tr>
+                <td><strong>Servidor Web</strong></td>
+                <td>Apache 2.4 (USBWebserver)</td>
+                <td>Servidor HTTP y rewrite rules</td>
+                <td>Directivas de seguridad mediante archivos <code>.htaccess</code> que bloquean acceso a directorios protegidos e impiden ejecución de PHP en uploads.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>5. Modelo de Datos y Diccionario Relacional Completo (14 Tablas)</h1>
+    <p>
+        La base de datos <code>tutoresonline</code> está compuesta por 14 entidades relacionales estrictamente tipadas y normalizadas en Tercera Forma Normal (3FN), garantizando la no redundancia y la coherencia de datos.
+    </p>
+
+    <div class="card-box">
+        <h3 style="margin-top: 0;">5.1. Tabla: <code>usuarios</code> (Entidad Central de Cuentas)</h3>
+        <p>Almacena la identidad de estudiantes y profesores. Soporta autenticación nativa y cuentas OAuth federadas.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Campo</th>
+                    <th>Tipo de Dato</th>
+                    <th>Nulo</th>
+                    <th>Defecto</th>
+                    <th>Descripción y Reglas</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>id</code></td>
+                    <td>INT UNSIGNED</td>
+                    <td>NO</td>
+                    <td>AUTO_INCREMENT</td>
+                    <td>Clave Primaria (PK) unívoca.</td>
+                </tr>
+                <tr>
+                    <td><code>nombre</code></td>
+                    <td>VARCHAR(100)</td>
+                    <td>NO</td>
+                    <td>--</td>
+                    <td>Nombre completo del usuario. Sanitizado con <code>limpiar()</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>correo</code></td>
+                    <td>VARCHAR(150)</td>
+                    <td>NO</td>
+                    <td>--</td>
+                    <td>Dirección de email. Índice único <code>uq_usuarios_correo</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>password_hash</code></td>
+                    <td>VARCHAR(255)</td>
+                    <td>SÍ</td>
+                    <td>NULL</td>
+                    <td>Hash Bcrypt (cost 12) con pepper. NULL si se registró exclusivamente con Google.</td>
+                </tr>
+                <tr>
+                    <td><code>rol</code></td>
+                    <td>ENUM('estudiante','tutor')</td>
+                    <td>NO</td>
+                    <td>--</td>
+                    <td>Rol en el sistema. Controla los privilegios de navegación.</td>
+                </tr>
+                <tr>
+                    <td><code>ciudad</code></td>
+                    <td>VARCHAR(100)</td>
+                    <td>SÍ</td>
+                    <td>NULL</td>
+                    <td>Ciudad de residencia para filtros geográficos de tutorías.</td>
+                </tr>
+                <tr>
+                    <td><code>foto</code></td>
+                    <td>VARCHAR(255)</td>
+                    <td>SÍ</td>
+                    <td>NULL</td>
+                    <td>Nombre del archivo de avatar guardado en <code>/public/uploads/</code> o URL externa.</td>
+                </tr>
+                <tr>
+                    <td><code>correo_verificado</code></td>
+                    <td>TINYINT(1)</td>
+                    <td>NO</td>
+                    <td>0</td>
+                    <td>0: Pendiente de activación, 1: Verificado.</td>
+                </tr>
+                <tr>
+                    <td><code>creado_en</code></td>
+                    <td>DATETIME</td>
+                    <td>NO</td>
+                    <td>CURRENT_TIMESTAMP</td>
+                    <td>Fecha y hora del registro del usuario.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SALTO DE PÁGINA -->
+    <div class="page-break"></div>
+
+    <div class="card-box">
+        <h3 style="margin-top: 0;">5.2. Tabla: <code>materias</code> y <code>niveles</code> (Catálogos Académicos)</h3>
+        <p>Catálogos normalizados para estandarizar la oferta académica.</p>
+        <table>
+            <thead>
+                <tr><th>Tabla</th><th>Campo</th><th>Tipo</th><th>Descripción</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>materias</code></td>
+                    <td><code>id</code>, <code>nombre</code></td>
+                    <td>INT UN / VARCHAR(100)</td>
+                    <td>Catálogo de asignaturas (Matemáticas, Física, Programación, etc.). <code>UNIQUE(nombre)</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>niveles</code></td>
+                    <td><code>id</code>, <code>nombre</code></td>
+                    <td>INT UN / VARCHAR(50)</td>
+                    <td>Niveles escolares (Primaria, Secundaria, Universidad, Profesional). <code>UNIQUE(nombre)</code>.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card-box">
+        <h3 style="margin-top: 0;">5.3. Tabla: <code>tutor_materia</code> (Especialidades y Tarifas)</h3>
+        <p>Tabla de unión ternaria que vincula al docente con la materia que imparte, el nivel y su costo horario.</p>
+        <table>
+            <thead>
+                <tr><th>Campo</th><th>Tipo</th><th>Nulo</th><th>Restricciones</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>tutor_id</code></td><td>INT UNSIGNED</td><td>NO</td><td>FK -> <code>usuarios.id</code> ON DELETE CASCADE</td></tr>
+                <tr><td><code>materia_id</code></td><td>INT UNSIGNED</td><td>NO</td><td>FK -> <code>materias.id</code> ON DELETE CASCADE</td></tr>
+                <tr><td><code>nivel_id</code></td><td>INT UNSIGNED</td><td>NO</td><td>FK -> <code>niveles.id</code> ON DELETE CASCADE</td></tr>
+                <tr><td><code>tarifa_hora</code></td><td>DECIMAL(10,2)</td><td>NO</td><td>Tarifa por hora en moneda local (def: 0.00). Clave Primaria Compuesta: (tutor_id, materia_id, nivel_id).</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card-box">
+        <h3 style="margin-top: 0;">5.4. Tabla: <code>disponibilidad</code> (Agenda Semanal)</h3>
+        <p>Configuración de franjas horarias y modalidad de atención del tutor.</p>
+        <table>
+            <thead>
+                <tr><th>Campo</th><th>Tipo</th><th>Nulo</th><th>Descripción</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>id</code></td><td>INT UNSIGNED</td><td>NO</td><td>PK AUTO_INCREMENT.</td></tr>
+                <tr><td><code>tutor_id</code></td><td>INT UNSIGNED</td><td>NO</td><td>FK -> <code>usuarios.id</code> ON DELETE CASCADE.</td></tr>
+                <tr><td><code>dia_semana</code></td><td>ENUM</td><td>NO</td><td>'lunes','martes','miercoles','jueves','viernes','sabado','domingo'.</td></tr>
+                <tr><td><code>hora_inicio</code> / <code>hora_fin</code></td><td>TIME</td><td>NO</td><td>Rango horario disponible (ej. 08:00 a 12:00).</td></tr>
+                <tr><td><code>modalidad</code></td><td>ENUM('virtual','presencial')</td><td>NO</td><td>Modalidad impartida en dicha franja.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card-box">
+        <h3 style="margin-top: 0;">5.5. Tabla: <code>sesiones</code> (Reservas de Tutorías)</h3>
+        <p>Gestiona el ciclo de vida de una solicitud de clase entre estudiante y tutor.</p>
+        <table>
+            <thead>
+                <tr><th>Campo</th><th>Tipo</th><th>Nulo</th><th>Descripción y Estados</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>id</code></td><td>INT UNSIGNED</td><td>NO</td><td>PK AUTO_INCREMENT. Identificador de sesión.</td></tr>
+                <tr><td><code>estudiante_id</code></td><td>INT UNSIGNED</td><td>NO</td><td>FK -> <code>usuarios.id</code> ON DELETE CASCADE.</td></tr>
+                <tr><td><code>tutor_id</code></td><td>INT UNSIGNED</td><td>NO</td><td>FK -> <code>usuarios.id</code> ON DELETE CASCADE.</td></tr>
+                <tr><td><code>materia_id</code></td><td>INT UNSIGNED</td><td>NO</td><td>FK -> <code>materias.id</code> ON DELETE RESTRICT.</td></tr>
+                <tr><td><code>fecha</code></td><td>DATE</td><td>NO</td><td>Fecha agendada (validada que sea presente o futura).</td></tr>
+                <tr><td><code>hora_inicio</code> / <code>hora_fin</code></td><td>TIME</td><td>NO</td><td>Horas exactas acordadas de la clase.</td></tr>
+                <tr><td><code>modalidad</code></td><td>ENUM</td><td>NO</td><td>'virtual' o 'presencial'.</td></tr>
+                <tr><td><code>estado</code></td><td>ENUM</td><td>NO</td><td><code>pendiente</code>, <code>aceptada</code>, <code>rechazada</code>, <code>finalizada</code>.</td></tr>
+                <tr><td><code>creado_en</code></td><td>DATETIME</td><td>NO</td><td>Fecha de radicación de la solicitud.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SALTO DE PÁGINA -->
+    <div class="page-break"></div>
+
+    <div class="card-box">
+        <h3 style="margin-top: 0;">5.6. Tabla: <code>calificaciones</code> (Sistema de Reputación y Reseñas)</h3>
+        <p>Almacena la puntuación de 1 a 5 estrellas y la opinión escrita emitida por los estudiantes.</p>
+        <table>
+            <thead>
+                <tr><th>Campo</th><th>Tipo</th><th>Nulo</th><th>Descripción y Restricción Anti-Spam</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>id</code></td><td>INT UNSIGNED</td><td>NO</td><td>PK AUTO_INCREMENT.</td></tr>
+                <tr><td><code>sesion_id</code></td><td>INT UNSIGNED</td><td>SÍ</td><td>FK -> <code>sesiones.id</code> ON DELETE CASCADE. NULL si se otorgó directamente desde el perfil del tutor.</td></tr>
+                <tr><td><code>estudiante_id</code></td><td>INT UNSIGNED</td><td>NO</td><td>FK -> <code>usuarios.id</code> ON DELETE CASCADE.</td></tr>
+                <tr><td><code>tutor_id</code></td><td>INT UNSIGNED</td><td>NO</td><td>FK -> <code>usuarios.id</code> ON DELETE CASCADE.</td></tr>
+                <tr><td><code>puntaje</code></td><td>TINYINT UNSIGNED</td><td>NO</td><td>Escala discreta de 1 a 5 estrellas.</td></tr>
+                <tr><td><code>comentario</code></td><td>TEXT</td><td>SÍ</td><td>Opinión textual del estudiante sobre la puntualidad y metodología.</td></tr>
+                <tr><td><code>creado_en</code></td><td>DATETIME</td><td>NO</td><td>Marca de tiempo de la calificación.</td></tr>
+            </tbody>
+        </table>
+        <div class="alert alert-info" style="margin-top: 8px;">
+            <strong>Regla de Integridad Única:</strong> La tabla posee la restricción <code>UNIQUE KEY uq_calif_estudiante_tutor (estudiante_id, tutor_id)</code>, lo que garantiza que un estudiante no pueda duplicar calificaciones ni realizar spam destructivo sobre un profesor, permitiéndole actualizar su nota mediante <code>ON DUPLICATE KEY UPDATE</code>.
+        </div>
+    </div>
+
+    <div class="card-box">
+        <h3 style="margin-top: 0;">5.7. Tabla: <code>archivos</code> (Repositorio Documental)</h3>
+        <p>Auditoría y metadatos de archivos físicos almacenados en el servidor.</p>
+        <table>
+            <thead><tr><th>Campo</th><th>Tipo</th><th>Nulo</th><th>Descripción</th></tr></thead>
+            <tbody>
+                <tr><td><code>id</code></td><td>INT UNSIGNED</td><td>NO</td><td>PK AUTO_INCREMENT.</td></tr>
+                <tr><td><code>usuario_id</code></td><td>INT UNSIGNED</td><td>NO</td><td>FK -> <code>usuarios.id</code> ON DELETE CASCADE.</td></tr>
+                <tr><td><code>tipo</code></td><td>ENUM('foto','hoja_vida')</td><td>NO</td><td>Categoría del documento.</td></tr>
+                <tr><td><code>nombre_original</code></td><td>VARCHAR(255)</td><td>NO</td><td>Nombre del archivo original que el usuario seleccionó.</td></tr>
+                <tr><td><code>nombre_guardado</code></td><td>VARCHAR(190)</td><td>NO</td><td>Nombre seguro aleatorio generado en disco. <code>UNIQUE</code>.</td></tr>
+                <tr><td><code>mime</code></td><td>VARCHAR(100)</td><td>NO</td><td>Tipo MIME real detectado mediante inspección binaria <code>finfo</code>.</td></tr>
+                <tr><td><code>tamano</code></td><td>INT UNSIGNED</td><td>NO</td><td>Tamaño en bytes del archivo.</td></tr>
+                <tr><td><code>subido_en</code></td><td>DATETIME</td><td>NO</td><td>Timestamp del almacenamiento.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card-box">
+        <h3 style="margin-top: 0;">5.8. Tablas de Seguridad, Sesiones y Auditoría</h3>
+        <table>
+            <thead><tr><th>Tabla</th><th>Campos Principales</th><th>Propósito y Criptografía</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><code>tokens_sesion</code></td>
+                    <td><code>selector</code>, <code>validador_hash</code>, <code>user_agent_hash</code>, <code>expira_en</code></td>
+                    <td>Implementa la cookie "Recordarme" de 30 días con arquitectura selector:validador. Validador y User-Agent hasheados con SHA-256.</td>
+                </tr>
+                <tr>
+                    <td><code>tokens_verificacion</code></td>
+                    <td><code>usuario_id</code>, <code>tipo</code>, <code>token_hash</code>, <code>expira_en</code>, <code>usado</code></td>
+                    <td>Tokens criptográficos unívocos para confirmación de correos y restablecimiento de contraseña.</td>
+                </tr>
+                <tr>
+                    <td><code>cuentas_oauth</code></td>
+                    <td><code>usuario_id</code>, <code>proveedor</code>, <code>proveedor_user_id</code></td>
+                    <td>Vinculación de identidad federada con el <code>sub</code> devuelto por Google.</td>
+                </tr>
+                <tr>
+                    <td><code>intentos_login</code></td>
+                    <td><code>correo</code>, <code>ip</code>, <code>exitoso</code>, <code>creado_en</code></td>
+                    <td>Tabla de rate limiting contra ataques de fuerza bruta (bloqueo tras 5 fallos en 15 minutos).</td>
+                </tr>
+                <tr>
+                    <td><code>conversaciones</code></td>
+                    <td><code>estudiante_id</code>, <code>tutor_id</code>, <code>actualizado_en</code></td>
+                    <td>Hilo directo de mensajería entre dos usuarios. <code>UNIQUE(estudiante_id, tutor_id)</code>.</td>
+                </tr>
+                <tr>
+                    <td><code>mensajes</code></td>
+                    <td><code>conversacion_id</code>, <code>emisor_id</code>, <code>texto</code>, <code>leido</code></td>
+                    <td>Contenido de mensajes del chat con marcas de lectura y soporte para polling incremental.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- SALTO DE PÁGINA -->
+    <div class="page-break"></div>
+
+    <h1>6. Arquitectura de Seguridad, Criptografía y Hardening</h1>
+    <p>
+        El sistema implementa un modelo de seguridad preventivo que cubre las diez vulnerabilidades más críticas del <strong>OWASP Top 10</strong>, garantizando confidencialidad, integridad y disponibilidad.
+    </p>
+
+    <h2>6.1. Hardening HTTP y Control de Cabeceras</h2>
+    <p>
+        La función <code>enviar_cabeceras_seguridad()</code> en <code>includes/seguridad.php</code> inyecta cabeceras defensivas antes de que cualquier byte sea emitido al navegador:
+    </p>
+    <ul>
+        <li><code>X-Content-Type-Options: nosniff</code>: Impide que los navegadores apliquen MIME-sniffing sobre archivos descargados, evitando que un atacante camufle scripts ejecutables como imágenes.</li>
+        <li><code>X-Frame-Options: DENY</code>: Protege contra ataques de <em>Clickjacking</em>, asegurando que la plataforma nunca pueda ser incrustada dentro de elementos <code>&lt;iframe&gt;</code> de portales de terceros.</li>
+        <li><code>Referrer-Policy: strict-origin-when-cross-origin</code>: Limita la fuga de tokens o parámetros de URL en las cabeceras Referer enviadas a dominios externos.</li>
+        <li><code>X-XSS-Protection: 1; mode=block</code>: Activa el filtro heurístico contra cross-site scripting reflejado en navegadores legacy.</li>
+    </ul>
+
+    <h2>6.2. Gestión Avanzada de Sesiones</h2>
+    <p>
+        La directiva <code>iniciar_sesion_segura()</code> configura cookies de sesión con directivas estrictas de acuerdo con las mejores prácticas de IETF y OWASP:
+    </p>
+    <pre><code>session_set_cookie_params([
+    'lifetime' => 0,          // Expira al cerrar el navegador
+    'path'     => '/',
+    'domain'   => '',
+    'secure'   => $es_https,  // Flag Secure condicional a HTTPS
+    'httponly' => true,       // Inaccesible para document.cookie en JavaScript
+    'samesite' => 'Lax'       // Mitiga CSRF en navegaciones entre sitios
+]);</code></pre>
+    <div class="card-box">
+        <h4 style="margin-top: 0;">Mecanismos de Protección de Sesión</h4>
+        <ol>
+            <li><strong>Atadura al Agente de Usuario (User-Agent Binding):</strong> Al iniciar sesión se almacena en <code>$_SESSION['ua_hash']</code> el hash SHA-256 del <code>HTTP_USER_AGENT</code>. Si una petición posterior presenta un hash diferente (típico en robo de cookies de sesión), la sesión es destruida inmediatamente con <code>destruir_sesion()</code>.</li>
+            <li><strong>Control de Inactividad (Session Timeout):</strong> Las sesiones se invalidan automáticamente tras 30 minutos sin interacción activa (<code>time() - $_SESSION['ultimo_acceso'] > 1800</code>).</li>
+            <li><strong>Regeneración Periódica de ID (Anti-Fixation):</strong> Se invoca <code>session_regenerate_id(true)</code> en el login y de manera automática cada 15 minutos para impedir que un atacante fije previamente el identificador.</li>
+        </ol>
+    </div>
+
+    <h2>6.3. Cookies Persistentes: Arquitectura Selector-Validador</h2>
+    <p>
+        La funcionalidad "Recordarme" de 30 días no almacena el ID del usuario ni su contraseña en cookies (práctica vulnerable común). En su lugar, implementa el estándar propuesto por <em>Charles Miller</em>:
+    </p>
+    <ul>
+        <li><strong>Selector:</strong> Cadena aleatoria de 16 bytes hexadecimales (32 caracteres) generada con <code>random_bytes(16)</code>. Sirve como clave de búsqueda indexada en la tabla <code>tokens_sesion</code>.</li>
+        <li><strong>Validador:</strong> Secreto criptográfico de 32 bytes (64 caracteres) generado con <code>random_bytes(32)</code>. En la base de datos solo se guarda su hash <code>hash('sha256', $validador)</code>, jamás en texto plano.</li>
+        <li><strong>Rotación de Token en Cada Uso:</strong> Cada vez que el usuario regresa y la cookie es validada, el validador es renovado por uno nuevo, actualizando la base de datos y la cookie.</li>
+        <li><strong>Detección de Robo de Token y Revocación Masiva:</strong> Si un atacante presenta un selector existente pero un validador incorrecto, el sistema asume que la cookie fue interceptada y clonada; en respuesta, <strong>destruye y revoca inmediatamente todos los tokens persistentes del usuario afectado</strong>, forzando un nuevo login seguro.</li>
+    </ul>
+
+    <!-- SALTO DE PÁGINA -->
+    <div class="page-break"></div>
+
+    <h2>6.4. Protección CSRF Universal</h2>
+    <p>
+        Para neutralizar peticiones falsificadas en sitios cruzados (CSRF), la función <code>csrf_token()</code> genera un token pseudoaleatorio criptográfico de 32 bytes (64 hex). Se inyecta en formularios mediante <code>csrf_campo()</code> y en peticiones asíncronas de JavaScript mediante la cabecera <code>X-CSRF-TOKEN</code>.
+    </p>
+    <p>
+        La verificación en <code>verificar_csrf()</code> se realiza mediante <code>hash_equals($_SESSION['csrf_token'], $token)</code>, garantizando una comparación en tiempo constante que protege contra ataques de temporización (timing attacks).
+    </p>
+
+    <h2>6.5. Almacenamiento Seguro de Contraseñas (Bcrypt + Pepper)</h2>
+    <p>
+        Las contraseñas no se almacenan en texto plano ni con algoritmos obsoletos (MD5/SHA1). En <code>includes/seguridad.php</code>:
+    </p>
+    <pre><code>function hashear_password($password) {
+    $pepper = env('APP_PEPPER', '');
+    $prehash = hash_hmac('sha256', $password, $pepper);
+    return password_hash($prehash, PASSWORD_DEFAULT, ['cost' => 12]);
+}</code></pre>
+    <p>
+        El uso de un <strong>Pepper</strong> (secreto mantenido en el archivo <code>.env</code> fuera de la base de datos) combinado con <strong>HMAC-SHA-256</strong> antes de aplicar <strong>Bcrypt con costo 12</strong> garantiza que incluso ante un volcado total de la base de datos SQL, las tablas rainbow y los ataques de fuerza bruta asistidos por GPUs sean completamente inviables.
+    </p>
+
+    <h2>6.6. Mitigación de Fuerza Bruta y Rate Limiting</h2>
+    <p>
+        Cada intento fallido de autenticación es registrado en la tabla <code>intentos_login</code> vinculando la IP del cliente y el correo consultado. La función <code>esta_bloqueado_fuerza_bruta($correo, 5, 15)</code> evalúa si se han producido 5 o más fallos en una ventana de 15 minutos; de ser así, bloquea de forma inmediata el intento sin consultar la contraseña, protegiendo al motor de base de datos contra sobrecarga y a las cuentas contra ataques de diccionario.
+    </p>
+
+    <h2>6.7. Subida Segura de Archivos</h2>
+    <p>
+        El módulo <code>includes/archivos.php</code> aplica una estricta tubería de validación para cualquier fichero recibido:
+    </p>
+    <ol>
+        <li><strong>Validación de Códigos de Error:</strong> Se comprueba <code>$_FILES['error'] === UPLOAD_ERR_OK</code>.</li>
+        <li><strong>Límites de Tamaño:</strong> Máximo 2 MB para imágenes de perfil y 5 MB para hojas de vida en PDF.</li>
+        <li><strong>Lista Blanca de Extensiones:</strong> Solo se admiten extensiones <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code> y <code>.pdf</code>.</li>
+        <li><strong>Inspección Binaria de Contenido (MIME Sniffing Prevention):</strong> No se confía en la cabecera enviada por el navegador. Se utiliza <code>finfo_open(FILEINFO_MIME_TYPE)</code> para examinar la firma mágica binaria de los primeros bytes del archivo en disco.</li>
+        <li><strong>Nombres Aleatorios Criptográficos:</strong> Se descarta el nombre de archivo del cliente y se asigna un identificador único con <code>bin2hex(random_bytes(16)) . '.' . $extension</code>.</li>
+        <li><strong>Protección a Nivel de Servidor en <code>/uploads/.htaccess</code>:</strong> El directorio de almacenamiento contiene una configuración Apache que desactiva el motor PHP e invalida la ejecución de scripts:
+            <pre><code># public/uploads/.htaccess
+php_flag engine off
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .phar
+&lt;FilesMatch "\.(php|phtml|php3|php4|php5|php7|phar)$"&gt;
+    Order Deny,Allow
+    Deny from all
+&lt;/FilesMatch&gt;</code></pre>
+        </li>
+    </ol>
+
+    <!-- SALTO DE PÁGINA -->
+    <div class="page-break"></div>
+
+    <h1>7. Módulos del Sistema y Flujos Funcionales Detallados</h1>
+
+    <h2>7.1. Módulo de Autenticación, Registro y Google OAuth 2.0</h2>
+    <p>
+        El sistema provee dos flujos de acceso claramente diferenciados para estudiantes y tutores:
+    </p>
+    <div class="card-box">
+        <h4 style="margin-top: 0; color: var(--primary);">Flujo Tradicional con Verificación por Correo</h4>
+        <ol>
+            <li>El usuario completa el formulario en <code>registro.php</code> seleccionando su rol (estudiante o tutor) y su ciudad.</li>
+            <li>Se valida la robustez de la contraseña, se hashea con Bcrypt+Pepper y se crea el registro con <code>correo_verificado = 0</code>.</li>
+            <li>Se genera un token unívoco de 64 caracteres en <code>tokens_verificacion</code> con 24 horas de vigencia y se envía el enlace (o se registra en <code>logs/mail.log</code> en modo desarrollo).</li>
+            <li>Al hacer clic en el enlace, <code>verificar.php</code> valida el token en tiempo constante, actualiza la cuenta a <code>correo_verificado = 1</code> e invalida el token.</li>
+        </ol>
+    </div>
+
+    <div class="card-box">
+        <h4 style="margin-top: 0; color: var(--secondary);">Flujo Federado Google OAuth 2.0</h4>
+        <ol>
+            <li>El usuario hace clic en "Continuar con Google" en <code>login.php</code> o <code>registro.php</code>.</li>
+            <li>Se genera un <code>state</code> aleatorio almacenado en sesión para neutralizar ataques CSRF en OAuth y se redirige a los servidores de consentimiento de Google.</li>
+            <li>Google devuelve el control a <code>oauth_callback.php</code> con el código de autorización y el <code>state</code>.</li>
+            <li>El servidor intercambia el código por un <code>access_token</code> directamente contra <code>oauth2.googleapis.com/token</code> usando cURL (o streams HTTP como respaldo nativo).</li>
+            <li>Se consulta el perfil en <code>googleapis.com/oauth2/v3/userinfo</code>. Si el usuario ya existe, se inicia sesión; si es nuevo, se completa el registro automático asignando el rol y vinculando su <code>sub</code> en la tabla <code>cuentas_oauth</code>.</li>
+        </ol>
+    </div>
+
+    <h2>7.2. Dashboard Universal Adaptativo (<code>panel.php</code>)</h2>
+    <p>
+        El panel de control actúa como enrutador inteligente adaptativo según el rol de la sesión:
+    </p>
+    <ul>
+        <li><strong>Estudiantes:</strong> Visualización de sus tutorías agendadas clasificadas por estado (Pendiente, Aceptada, Rechazada, Finalizada), enlace directo al chat con el profesor correspondiente, y botón con modal para calificar tutorías que han concluido.</li>
+        <li><strong>Tutores:</strong> Bandeja de solicitudes entrantes de estudiantes con acciones inmediatas para aceptar o rechazar solicitudes, marcado de clases como finalizadas, gestor de especialidades y tarifas por hora con soporte para registrar nuevas materias en tiempo real, y panel de administración de disponibilidad horaria semanal.</li>
+    </ul>
+
+    <h2>7.3. Perfil Universal Multifunción (<code>perfil.php</code>)</h2>
+    <p>
+        El archivo <code>perfil.php</code> unifica la administración privada de la cuenta y la visualización pública de profesores:
+    </p>
+    <ul>
+        <li><strong>Vista Privada ("Mi Perfil"):</strong> Interfaz organizada mediante un menú lateral por apartados (Datos Personales, Seguridad y Cambio de Clave, Especialidades y Tarifas, Disponibilidad Semanal, y Documentos/Fotos subidos).</li>
+        <li><strong>Vista Pública (Docente):</strong> Ficha técnica del profesor con su fotografía, ciudad, materias que imparte, tarifas por hora por nivel educativo, franjas horarias y botón directo para "Solicitar Tutoría".</li>
+        <li><strong>Módulo de Opiniones y Calificaciones:</strong> Muestra el promedio real de estrellas y la cantidad de reseñas. Si el tutor no tiene reseñas, indica limpiamente <em>"Sin calificaciones aún"</em> en lugar de calificaciones artificiales. Incluye un formulario interactivo con selector de 1 a 5 estrellas y caja de comentarios para estudiantes autenticados, aplicando bloqueo de auto-calificaciones para los tutores.</li>
+    </ul>
+
+    <!-- SALTO DE PÁGINA -->
+    <div class="page-break"></div>
+
+    <h2>7.4. Buscador Reactivo de Tutores (<code>buscar.php</code> + Vue.js 3)</h2>
+    <p>
+        El buscador de profesores opera como una aplicación de página única (SPA) ligera montada sobre <strong>Vue 3</strong> por CDN:
+    </p>
+    <ul>
+        <li><strong>Filtros Simultáneos:</strong> Búsqueda en vivo por nombre de profesor o materia (con debounce de 300 ms), nivel académico (Primaria, Secundaria, Universidad), ciudad geográfica y modalidad (virtual o presencial).</li>
+        <li><strong>Consumo de la API JSON:</strong> Emite peticiones asíncronas con <code>fetch()</code> hacia <code>api/buscar_tutores.php</code> y reactualiza la rejilla de tarjetas al instante sin recargar la página.</li>
+        <li><strong>Persistencia de Preferencias:</strong> Almacena en la cookie <code>ultima_materia_buscada</code> la última consulta realizada para pre-cargar los resultados cuando el alumno regresa al portal.</li>
+        <li><strong>Calificación Real:</strong> Muestra insignias dinámicas según el número de reseñas (<code>Sin reseñas aún</code> o estrellas doradas con promedio numérico real).</li>
+    </ul>
+
+    <h2>7.5. Sistema de Mensajería y Chat en Tiempo Real (<code>chat.php</code>)</h2>
+    <p>
+        Para proveer comunicación instantánea entre alumnos y docentes sin incurrir en la complejidad de servidores WebSockets persistentes (incompatibles con la mayoría de servidores compartidos PHP/Apache), se diseñó una arquitectura de <strong>Polling Incremental Optimizado</strong>:
+    </p>
+    <div class="card-box">
+        <h4 style="margin-top: 0;">Arquitectura del Chat con Polling</h4>
+        <pre><code>[ Navegador / Vue 3 ]                                        [ Servidor PHP / MySQL ]
+         |                                                                    |
+         | --- 1. GET /api/chat_conversaciones.php -------------------------> |
+         | <--- Lista de contactos y último mensaje ------------------------- |
+         |                                                                    |
+         | --- 2. GET /api/chat_mensajes.php?conversacion_id=5 -------------> |
+         | <--- Últimos 60 mensajes + marca como leídos --------------------- |
+         |                                                                    |
+         | --- 3. Bucle Polling (Cada 2.5 seg) -----------------------------> |
+         |        GET /api/chat_mensajes.php?conversacion_id=5&desde_id=142   |
+         | <--- Retorna SOLO mensajes con id > 142 (Carga mínima) ---------- |
+         |                                                                    |
+         | --- 4. POST /api/chat_enviar.php (CSRF + Validación de Texto) ---> |
+         | <--- Confirma inserción en BD y retorna mensaje ------------------ |</code></pre>
+    </div>
+    <ul>
+        <li><strong>Eficiencia en Ancho de Banda:</strong> Mediante el parámetro <code>desde_id</code>, las consultas recurrentes transmiten payloads diminutos (pocos bytes) cuando no hay mensajes nuevos.</li>
+        <li><strong>Seguridad de Participación:</strong> Cada endpoint de chat verifica estrictamente en base de datos que <code>$_SESSION['usuario_id']</code> sea el <code>estudiante_id</code> o el <code>tutor_id</code> de la conversación consultada, respondiendo <code>HTTP 403 Forbidden</code> ante cualquier intento de intrusión.</li>
+        <li><strong>Sanitización Integral:</strong> El texto enviado se limpia con <code>strip_tags()</code> en servidor y se renderiza en el cliente sanitizado para evitar inyecciones XSS.</li>
+    </ul>
+
+    <!-- SALTO DE PÁGINA -->
+    <div class="page-break"></div>
+
+    <h1>8. Especificación Formal de la API RESTful Interna</h1>
+    <p>
+        La plataforma cuenta con un conjunto de endpoints REST desacoplados que devuelven respuestas normalizadas en formato <code>application/json; charset=UTF-8</code>.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Ruta del Endpoint</th>
+                <th>Método</th>
+                <th>Autenticación</th>
+                <th>Parámetros</th>
+                <th>Respuesta Exitosa (JSON)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>/api/buscar_tutores.php</code></td>
+                <td><span class="badge badge-primary">GET</span></td>
+                <td>Pública</td>
+                <td><code>materia</code>, <code>nivel_id</code>, <code>ciudad</code>, <code>modalidad</code></td>
+                <td><code>{ exito: true, total: N, tutores: [...] }</code></td>
+            </tr>
+            <tr>
+                <td><code>/api/reservar.php</code></td>
+                <td><span class="badge badge-success">POST</span></td>
+                <td>Estudiante</td>
+                <td><code>tutor_id</code>, <code>materia_id</code>, <code>fecha</code>, <code>hora_inicio</code>, <code>hora_fin</code>, <code>modalidad</code>, <code>csrf_token</code></td>
+                <td><code>{ exito: true, mensaje: "...", sesion_id: N }</code></td>
+            </tr>
+            <tr>
+                <td><code>/api/solicitudes.php</code></td>
+                <td><span class="badge badge-success">POST</span></td>
+                <td>Tutor</td>
+                <td><code>sesion_id</code>, <code>accion</code> ('aceptar','rechazar','finalizar'), <code>csrf_token</code></td>
+                <td><code>{ exito: true, mensaje: "...", nuevo_estado: "..." }</code></td>
+            </tr>
+            <tr>
+                <td><code>/api/disponibilidad.php</code></td>
+                <td><span class="badge badge-primary">GET/POST</span></td>
+                <td>Tutor (POST) / Pública (GET)</td>
+                <td><code>tutor_id</code> (GET) | <code>dia_semana</code>, <code>hora_inicio</code>, <code>hora_fin</code>, <code>modalidad</code> (POST)</td>
+                <td><code>{ exito: true, disponibilidad: [...] }</code></td>
+            </tr>
+            <tr>
+                <td><code>/api/chat_conversaciones.php</code></td>
+                <td><span class="badge badge-primary">GET/POST</span></td>
+                <td>Requerida</td>
+                <td>GET: Ninguno | POST: <code>contacto_id</code>, <code>csrf_token</code></td>
+                <td><code>{ exito: true, conversaciones: [...] }</code></td>
+            </tr>
+            <tr>
+                <td><code>/api/chat_mensajes.php</code></td>
+                <td><span class="badge badge-primary">GET</span></td>
+                <td>Requerida (Participante)</td>
+                <td><code>conversacion_id</code>, <code>desde_id</code> (opcional)</td>
+                <td><code>{ exito: true, mensajes: [...], total: N }</code></td>
+            </tr>
+            <tr>
+                <td><code>/api/chat_enviar.php</code></td>
+                <td><span class="badge badge-success">POST</span></td>
+                <td>Requerida (Participante)</td>
+                <td><code>conversacion_id</code>, <code>texto</code>, <code>csrf_token</code></td>
+                <td><code>{ exito: true, mensaje: { id: N, texto: "...", hora: "..." } }</code></td>
+            </tr>
+            <tr>
+                <td><code>/api/chat_ia.php</code></td>
+                <td><span class="badge badge-success">POST</span></td>
+                <td>Requerida (Sesión activa)</td>
+                <td><code>mensaje</code>, <code>historial</code>, <code>csrf_token</code></td>
+                <td><code>{ exito: true, respuesta: "..." }</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>8.2. Explicación Técnica de Módulos Avanzados y Principios SOLID</h2>
+    <div class="card-box">
+        <h4 style="margin-top: 0; color: var(--primary);">1. Sala Privada de Videollamada (<code>public/videollamada.php</code>)</h4>
+        <p>
+            Al aceptar una solicitud en <code>panel.php</code> o <code>api/solicitudes.php</code>, el sistema genera un token criptográfico de 96 bits con <code>bin2hex(random_bytes(12))</code> (formato <code>TutoresOnLine_Sala_{id}_{24_hex}</code>) y lo almacena en <code>sesiones.enlace_videollamada</code>. Cuando el usuario accede a <code>videollamada.php?id={id}</code>, el servidor valida que tenga sesión activa y que su <code>usuario_id</code> coincida estrictamente con <code>estudiante_id</code> o <code>tutor_id</code>. Luego instancia el cliente embebido <code>JitsiMeetExternalAPI</code> inyectando su nombre, rol, correo y asignatura, junto con un temporizador regresivo que autodestruye el token (<code>enlace_videollamada = NULL</code>) al concluir el tiempo de la clase o al pulsar <em>"Finalizar y Cerrar Sala"</em>.
+        </p>
+
+        <h4 style="color: var(--primary);">2. Cliente SMTP Nativo sobre Sockets TCP/TLS (<code>includes/correo.php</code> y <code>includes/mailer.php</code>)</h4>
+        <p>
+            Implementa un cliente SMTP completo mediante <code>stream_socket_client()</code> sin requerir librerías externas: negocia <code>EHLO</code>, eleva la conexión a TLS 1.2/1.3 con <code>STARTTLS</code> + <code>stream_socket_enable_crypto()</code>, autentica vía <code>AUTH LOGIN</code> en Base64 y envía notificaciones HTML UTF-8 al crear o aceptar/rechazar una reserva, guardando siempre copia de respaldo en <code>logs/mail.log</code>.
+        </p>
+
+        <h4 style="color: var(--primary);">3. Asistente Académico con IA Generativa y Transporte Triple (<code>api/chat_ia.php</code>)</h4>
+        <p>
+            Conecta con la API de OpenRouter (<code>deepseek/deepseek-v4.1-flash</code> con failover automático a <code>deepseek/deepseek-chat</code> y <code>openrouter/auto</code>) mediante un motor HTTP de 3 niveles: (1) <code>cURL</code>, (2) Streams HTTP nativos (<code>file_get_contents</code> + <code>stream_context_create</code> para entornos como USBWebserver sin <code>php_curl</code>) y (3) Socket TLS directo (<code>ssl://openrouter.ai:443</code>). Además, <code>construir_system_prompt()</code> consulta en vivo los tutores verificados, materias, niveles y tarifas de la base de datos para ofrecer recomendaciones reales.
+        </p>
+
+        <h4 style="color: var(--primary);">4. Principios SOLID Aplicados en el Proyecto</h4>
+        <ul>
+            <li><strong>S (Single Responsibility):</strong> Separación estricta en <code>includes/</code>: <code>conexion.php</code> (PDO y migraciones), <code>seguridad.php</code> (CSRF, XSS, Bcrypt+Pepper, Rate Limit), <code>auth.php</code> (RBAC y cookies persistentes), <code>correo.php</code> (SMTP) y <code>archivos.php</code> (validación MIME binaria).</li>
+            <li><strong>O (Open/Closed):</strong> Configuración extensible por variables en <code>config/.env</code> (drivers de correo y modelos de IA) sin alterar la lógica de negocio.</li>
+            <li><strong>D (Dependency Inversion):</strong> Inyección de la instancia <code>PDO</code> en los servicios de notificación y consulta.</li>
+        </ul>
+    </div>
+
+    <h1>9. Estructura Física del Repositorio y Roles de Archivos</h1>
+    <pre><code>tutoresonline/
+├── .gitignore                      # Exclusión de credenciales (.env), uploads/* y logs/*
+├── AGENTS.md                       # Especificaciones técnicas y directivas para agentes
+├── PLAN.md                         # Hoja de ruta y registro de hitos del proyecto
+├── README.md                       # Documentación inicial y credenciales de pruebas
+├── config/
+│   ├── .env                        # Variables de entorno locales (DB, llaves criptográficas)
+│   ├── .env.example                # Plantilla de configuración con valores por defecto
+│   ├── .htaccess                   # Bloqueo total de lectura web HTTP (Require all denied)
+│   └── config.php                  # Parser nativo de .env, definición de constantes y rutas
+├── database/
+│   ├── schema.sql                  # Definición DDL de 14 tablas en InnoDB utf8mb4
+│   └── datos_prueba.sql            # Semillas de catálogo y 6 usuarios preconfigurados
+├── includes/
+│   ├── .htaccess                   # Protección contra ejecución directa de archivos core
+│   ├── conexion.php                # Conexión Singleton PDO segura
+│   ├── seguridad.php               # Módulo central de cabeceras, CSRF, XSS y rate limiting
+│   ├── auth.php                    # Control de sesiones, roles RBAC y tokens persistentes
+│   ├── oauth_google.php            # Integración nativa Google OAuth 2.0 (cURL y Streams)
+│   ├── archivos.php                # Validación MIME (finfo) y almacenamiento seguro
+│   ├── correo.php                  # Despachador de correos (soporta modo log y modo mail)
+│   ├── header.php                  # Navbar responsiva y renderizador de alertas flash
+│   └── footer.php                  # Pie de página y scripts de Bootstrap 5
+├── api/                            # Controladores REST que responden JSON puro
+│   ├── buscar_tutores.php          # Búsqueda multicriterio con promedios reales
+│   ├── reservar.php                # Agendamiento seguro de tutorías
+│   ├── solicitudes.php             # Gestión de estados (aceptar / rechazar / finalizar)
+│   ├── disponibilidad.php          # Consulta y registro de franjas horarias
+│   ├── chat_conversaciones.php     # Gestión de conversaciones de chat
+│   ├── chat_mensajes.php           # Polling de mensajes nuevos
+│   └── chat_enviar.php             # Envío autenticado y sanitizado de mensajes
+├── logs/                           # Auditoría y simulación de correo en desarrollo
+│   ├── .htaccess                   # Bloqueo de acceso HTTP
+│   └── mail.log                    # Registro de correos emitidos en entorno local
+└── public/                         # Raíz pública accesible por el servidor web
+    ├── index.php                   # Página de aterrizaje y presentación comercial
+    ├── login.php                   # Formulario de acceso y botón de Google
+    ├── registro.php                # Creación de cuenta (estudiante / tutor)
+    ├── verificar.php               # Activación de correo mediante token
+    ├── recuperar.php               # Restablecimiento seguro de contraseña
+    ├── logout.php                  # Destrucción de sesión y revocación de cookies
+    ├── buscar.php                  # Buscador interactivo SPA con Vue 3
+    ├── panel.php                   # Dashboard unificado adaptativo por rol
+    ├── perfil.php                  # Perfil universal privado y vista pública de profesores
+    ├── chat.php                    # Interfaz de mensajería interactiva
+    ├── reservar.php                # Formulario guiado de reserva de clases
+    ├── css/estilos.css             # Estilos y animaciones personalizadas
+    └── uploads/                    # Directorio de archivos con ejecución PHP bloqueada</code></pre>
+
+    <!-- SALTO DE PÁGINA -->
+    <div class="page-break"></div>
+
+    <h1>10. Guía de Despliegue, Instalación y Operación</h1>
+    <div class="card-box">
+        <h4 style="margin-top: 0; color: var(--primary);">Requisitos del Sistema</h4>
+        <ul>
+            <li><strong>Servidor Web:</strong> Apache 2.4+ con módulo <code>mod_rewrite</code> y soporte de directivas <code>.htaccess</code>.</li>
+            <li><strong>Intérprete:</strong> PHP 7.4 o superior (compatible con PHP 8.x) con extensiones activas: <code>pdo_mysql</code>, <code>fileinfo</code>, <code>session</code>, <code>json</code> y <code>curl</code> (opcional, fallback nativo por streams).</li>
+            <li><strong>Gestor de Base de Datos:</strong> MySQL 5.7+ o MariaDB 10.2+.</li>
+        </ul>
+    </div>
+
+    <h2>10.1. Procedimiento de Puesta en Marcha Paso a Paso</h2>
+    <ol>
+        <li><strong>Clonación o Copia del Proyecto:</strong>
+            Ubicar la carpeta <code>TutoresOn-Line</code> en el directorio raíz de Apache (por ejemplo en <code>C:\USBWebserver\root\tutoresonline</code> o <code>/var/www/html/tutoresonline</code>).
+        </li>
+        <li><strong>Configuración del Entorno (<code>.env</code>):</strong>
+            Copiar el archivo de plantilla <code>config/.env.example</code> a <code>config/.env</code> y ajustar las credenciales de conexión:
+            <pre><code>APP_NAME=TutoresOnLine
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost/tutoresonline/public
+APP_PEPPER=clave_secreta_pepper_criptografica_2026
+
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=tutoresonline
+DB_USER=root
+DB_PASS=usbw
+
+MAIL_DRIVER=log</code></pre>
+        </li>
+        <li><strong>Importación del Esquema de Base de Datos:</strong>
+            Acceder a phpMyAdmin (<code>http://localhost/phpmyadmin</code>) o ejecutar vía consola MySQL en orden:
+            <pre><code>mysql -u root -p < database/schema.sql
+mysql -u root -p tutoresonline < database/datos_prueba.sql</code></pre>
+        </li>
+        <li><strong>Verificación de Permisos de Archivos:</strong>
+            Asegurar permisos de lectura y escritura en los directorios <code>logs/</code> y <code>public/uploads/</code> para el usuario del servidor web.
+        </li>
+        <li><strong>Acceso a la Plataforma:</strong>
+            Ingresar desde el navegador web a <code>http://localhost/tutoresonline/public/</code>.
+        </li>
+    </ol>
+
+    <h2>10.2. Cuentas de Prueba Preconfiguradas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Rol</th>
+                <th>Correo Electrónico</th>
+                <th>Contraseña</th>
+                <th>Propósito de Prueba</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Estudiante</strong></td>
+                <td><code>carlos.estudiante@ejemplo.com</code></td>
+                <td><code>password123</code></td>
+                <td>Explorar profesores, solicitar tutorías y chatear con docentes.</td>
+            </tr>
+            <tr>
+                <td><strong>Estudiante</strong></td>
+                <td><code>laura.estudiante@ejemplo.com</code></td>
+                <td><code>password123</code></td>
+                <td>Probar calificaciones de 1 a 5 estrellas y navegación.</td>
+            </tr>
+            <tr>
+                <td><strong>Estudiante Pendiente</strong></td>
+                <td><code>andres.pendiente@ejemplo.com</code></td>
+                <td><code>password123</code></td>
+                <td>Validar el flujo de advertencia de verificación de correo.</td>
+            </tr>
+            <tr>
+                <td><strong>Tutor (Matemáticas)</strong></td>
+                <td><code>roberto.tutor@ejemplo.com</code></td>
+                <td><code>password123</code></td>
+                <td>Gestionar solicitudes de clase, horarios y tarifas.</td>
+            </tr>
+            <tr>
+                <td><strong>Tutor (Programación)</strong></td>
+                <td><code>maria.tutor@ejemplo.com</code></td>
+                <td><code>password123</code></td>
+                <td>Subida de hoja de vida en PDF y fotos de perfil.</td>
+            </tr>
+            <tr>
+                <td><strong>Tutor (Física)</strong></td>
+                <td><code>camilo.tutor@ejemplo.com</code></td>
+                <td><code>password123</code></td>
+                <td>Administración de disponibilidad semanal y modalidades.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- SALTO DE PÁGINA -->
+    <div class="page-break"></div>
+
+    <h1>11. Matriz de Casos de Prueba y Validaciones de Seguridad</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Módulo Evaluado</th>
+                <th>Escenario de Prueba</th>
+                <th>Resultado Esperado</th>
+                <th>Estado de Verificación</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Inyección SQL</strong></td>
+                <td>Inyección de vectores <code>' OR 1=1 --</code> en inputs de login, búsqueda y reservas.</td>
+                <td>Rechazado. PDO con <code>ATTR_EMULATE_PREPARES => false</code> trata el input estrictamente como dato literal.</td>
+                <td><span class="badge badge-success">Aprobado</span></td>
+            </tr>
+            <tr>
+                <td><strong>Cross-Site Scripting (XSS)</strong></td>
+                <td>Envío de cargas <code>&lt;script&gt;alert(1)&lt;/script&gt;</code> en chat, nombres y comentarios.</td>
+                <td>Neutralizado. Se escapa mediante <code>htmlspecialchars()</code> con <code>ENT_QUOTES</code>.</td>
+                <td><span class="badge badge-success">Aprobado</span></td>
+            </tr>
+            <tr>
+                <td><strong>Falsificación de Petición (CSRF)</strong></td>
+                <td>Envío de formularios POST omitiendo el token o manipulando su contenido.</td>
+                <td>Bloqueado. <code>verificar_csrf()</code> devuelve <code>HTTP 403 Forbidden</code> y rechaza la transacción.</td>
+                <td><span class="badge badge-success">Aprobado</span></td>
+            </tr>
+            <tr>
+                <td><strong>Fuerza Bruta</strong></td>
+                <td>Ejecución de más de 5 inicios de sesión fallidos consecutivos para una misma cuenta o IP.</td>
+                <td>Bloqueo automático de 15 minutos registrado en la tabla <code>intentos_login</code>.</td>
+                <td><span class="badge badge-success">Aprobado</span></td>
+            </tr>
+            <tr>
+                <td><strong>Subida Maliciosa</strong></td>
+                <td>Intento de subida de archivo ejecutable renombrado a <code>exploit.php.jpg</code>.</td>
+                <td>Rechazado. <code>finfo</code> inspecciona los bytes binarios y bloquea la extensión inválida.</td>
+                <td><span class="badge badge-success">Aprobado</span></td>
+            </tr>
+            <tr>
+                <td><strong>Robo de Cookie Persistente</strong></td>
+                <td>Manipulación del validador de la cookie <code>recordarme</code>.</td>
+                <td>Detección de alteración y revocación inmediata de todos los tokens del usuario en la base de datos.</td>
+                <td><span class="badge badge-success">Aprobado</span></td>
+            </tr>
+            <tr>
+                <td><strong>Auditoría de Calificaciones</strong></td>
+                <td>Verificación de tutores con 0 reseñas registradas.</td>
+                <td>El sistema muestra "Sin calificaciones aún" en vez de inflar promedios artificialmente a 5.0.</td>
+                <td><span class="badge badge-success">Aprobado</span></td>
+            </tr>
+            <tr>
+                <td><strong>Control de Auto-Calificación</strong></td>
+                <td>Un tutor intenta otorgarse una calificación a sí mismo en su propio perfil público.</td>
+                <td>Acción bloqueada. La interfaz y el backend impiden la auto-evaluación docente.</td>
+                <td><span class="badge badge-success">Aprobado</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1>12. Conclusiones y Hoja de Ruta de Escalabilidad</h1>
+    <p>
+        <strong>TutoresOnLine</strong> representa una implementación ejemplar de ingeniería de software web ágil y segura en PHP nativo. Demuestra que es viable construir sistemas de alta complejidad, reactivos y extremadamente seguros sin la necesidad de dependencias voluminosas o configuraciones complejas de empaquetado.
+    </p>
+    <div class="card-box">
+        <h4 style="margin-top: 0; color: var(--primary);">Hoja de Ruta para Futuras Extensiones (Roadmap)</h4>
+        <ol>
+            <li><strong>Integración de Pasarela de Pagos (Wompi / PayU / Stripe):</strong> Incorporar retención de fondos (escrow) donde el dinero del estudiante se custodia hasta que el tutor finaliza la clase satisfactoriamente.</li>
+            <li><strong>Salas de Videoconferencia Integradas (WebRTC / Jitsi Meet):</strong> Creación automática de salas virtuales encriptadas de extremo a extremo dentro de la misma plataforma para clases en modalidad virtual.</li>
+            <li><strong>Notificaciones Push y WhatsApp API:</strong> Notificación instantánea al tutor ante solicitudes entrantes y recordatorios para el estudiante previos al inicio de la tutoría.</li>
+            <li><strong>Transición a WebSockets Asíncronos (Ratchet PHP / Swoole):</strong> En servidores dedicados con procesos demonizados, migrar el polling a conexiones bidireccionales permanentes de baja latencia.</li>
+        </ol>
+    </div>
+
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 11px; color: var(--gray);">
+        <div>TutoresOnLine &bull; Memoria Técnica de Software</div>
+        <div>Fin del Documento Técnico</div>
+    </div>
+
+</body>
+</html>

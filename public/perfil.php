@@ -44,10 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $accion = $_POST['accion'] ?? '';
 
-    // ACCIÓN 1: Actualizar Información Personal (Nombre, Ciudad)
+    // ACCIÓN 1: Actualizar Información Personal (Nombre, Ciudad, Descripción)
     if ($accion === 'actualizar_datos') {
-        $nombre = trim($_POST['nombre'] ?? '');
-        $ciudad = trim($_POST['ciudad'] ?? '');
+        $nombre      = trim($_POST['nombre'] ?? '');
+        $ciudad      = trim($_POST['ciudad'] ?? '');
+        $descripcion = trim($_POST['descripcion'] ?? '');
+        if ($descripcion !== '') {
+            $descripcion = function_exists('mb_substr') ? mb_substr($descripcion, 0, 1500, 'UTF-8') : substr($descripcion, 0, 1500);
+        }
 
         if (empty($nombre) || strlen($nombre) < 3) {
             set_flash('danger', 'El nombre completo debe tener al menos 3 caracteres.');
@@ -55,8 +59,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             set_flash('danger', 'Por favor ingresa tu ciudad de residencia.');
         } else {
             try {
-                $stmt = $pdo->prepare("UPDATE `usuarios` SET `nombre` = ?, `ciudad` = ? WHERE `id` = ?");
-                $stmt->execute([$nombre, $ciudad, $usuario_id]);
+                if (($_SESSION['rol'] ?? '') === 'tutor') {
+                    $stmt = $pdo->prepare("UPDATE `usuarios` SET `nombre` = ?, `ciudad` = ?, `descripcion` = ? WHERE `id` = ?");
+                    $stmt->execute([$nombre, $ciudad, ($descripcion !== '' ? $descripcion : null), $usuario_id]);
+                } else {
+                    $stmt = $pdo->prepare("UPDATE `usuarios` SET `nombre` = ?, `ciudad` = ? WHERE `id` = ?");
+                    $stmt->execute([$nombre, $ciudad, $usuario_id]);
+                }
                 $_SESSION['nombre'] = $nombre;
                 set_flash('success', '¡Tus datos personales se han actualizado correctamente!');
             } catch (Exception $e) {
@@ -270,7 +279,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // CONSULTA DE DATOS DEL PERFIL A MOSTRAR
 // =============================================================================
 try {
-    $stmt_p = $pdo->prepare("SELECT `id`, `nombre`, `correo`, `rol`, `ciudad`, `foto`, `correo_verificado`, `creado_en` FROM `usuarios` WHERE `id` = ? LIMIT 1");
+    $stmt_p = $pdo->prepare("SELECT `id`, `nombre`, `correo`, `rol`, `ciudad`, `foto`, `descripcion`, `correo_verificado`, `creado_en` FROM `usuarios` WHERE `id` = ? LIMIT 1");
     $stmt_p->execute([$perfil_id]);
     $perfil_usuario = $stmt_p->fetch();
 
@@ -393,7 +402,7 @@ if ($es_mi_perfil && $es_dueno):
                         <i class="bi bi-person-gear fs-4 text-primary"></i>
                         <div class="lh-sm">
                             <strong class="d-block text-dark">Información Personal</strong>
-                            <small class="text-muted" style="font-size: 0.78rem;">Nombre y ciudad</small>
+                            <small class="text-muted" style="font-size: 0.78rem;"><?= $perfil_usuario['rol'] === 'tutor' ? 'Nombre, ciudad y bio' : 'Nombre y ciudad' ?></small>
                         </div>
                     </button>
 
@@ -483,6 +492,14 @@ if ($es_mi_perfil && $es_dueno):
                                     <input type="text" class="form-control" id="ciudad" name="ciudad" value="<?= e($perfil_usuario['ciudad'] ?? '') ?>" required placeholder="Ej. Bogotá, Medellín, Cali">
                                 </div>
                             </div>
+
+                            <?php if ($perfil_usuario['rol'] === 'tutor'): ?>
+                                <div class="mb-4">
+                                    <label for="descripcion" class="form-label fw-medium small">Sobre mí / Presentación Profesional</label>
+                                    <textarea class="form-control" id="descripcion" name="descripcion" rows="4" maxlength="1500" placeholder="Cuéntales a los estudiantes sobre tu formación académica, experiencia dictando clases y tu metodología de enseñanza..."><?= e($perfil_usuario['descripcion'] ?? '') ?></textarea>
+                                    <small class="text-muted">Esta presentación aparecerá de forma visible en tu perfil público para que los estudiantes te conozcan antes de abrir tu hoja de vida.</small>
+                                </div>
+                            <?php endif; ?>
 
                             <div class="d-flex justify-content-end">
                                 <button type="submit" class="btn btn-primary-custom px-4">
@@ -983,9 +1000,38 @@ else:
             </div>
         </div>
 
-        <!-- Columna Derecha: Materias, Horarios y Reseñas (Para Tutores) -->
+        <!-- Columna Derecha: Presentación, Materias, Horarios y Reseñas (Para Tutores) -->
         <div class="col-lg-8">
             <?php if ($perfil_usuario['rol'] === 'tutor'): ?>
+                <!-- 0. Presentación / Descripción del Profesor -->
+                <div class="card card-custom p-4 border-0 shadow-sm mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-person-lines-fill text-primary"></i> Sobre el Profesor
+                        </h4>
+                        <?php if ($es_dueno): ?>
+                            <a href="<?= APP_URL ?>/perfil.php#tab-datos" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil me-1"></i> Editar
+                            </a>
+                        <?php endif; ?>
+                    </div>
+
+                    <?php if (!empty(trim((string)($perfil_usuario['descripcion'] ?? '')))): ?>
+                        <p class="text-secondary mb-0" style="line-height: 1.7;">
+                            <?= nl2br(e($perfil_usuario['descripcion'])) ?>
+                        </p>
+                    <?php else: ?>
+                        <?php
+                        $lista_mat_resumen = !empty($materias)
+                            ? implode(', ', array_unique(array_column($materias, 'materia_nombre')))
+                            : 'distintas áreas académicas';
+                        ?>
+                        <p class="text-secondary mb-0" style="line-height: 1.7;">
+                            <?= e($perfil_usuario['nombre']) ?> brinda tutorías personalizadas en <strong><?= e($lista_mat_resumen) ?></strong><?= !empty($perfil_usuario['ciudad']) ? ' desde ' . e($perfil_usuario['ciudad']) : '' ?>, adaptando cada sesión al ritmo y objetivos de aprendizaje del estudiante.
+                        </p>
+                    <?php endif; ?>
+                </div>
+
                 <!-- 1. Materias y Tarifas -->
                 <div class="card card-custom p-4 border-0 shadow-sm mb-4">
                     <h4 class="fw-bold mb-3 d-flex align-items-center gap-2">

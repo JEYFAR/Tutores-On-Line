@@ -11,6 +11,7 @@ header('Content-Type: application/json; charset=UTF-8');
 require_once dirname(__DIR__) . '/config/config.php';
 require_once dirname(__DIR__) . '/includes/conexion.php';
 require_once dirname(__DIR__) . '/includes/seguridad.php';
+require_once dirname(__DIR__) . '/includes/mailer.php';
 
 iniciar_sesion_segura();
 
@@ -81,9 +82,11 @@ try {
     $stmt->execute([$estudiante_id, $tutor_id, $materia_id, $fecha, $hora_inicio, $hora_fin, $modalidad]);
     $sesion_id = (int)$pdo->lastInsertId();
 
+    notificar_reserva_creada($pdo, $sesion_id);
+
     echo json_encode([
         'exito' => true,
-        'mensaje' => '¡Tutoría solicitada exitosamente! Quedó registrada como pendiente de aprobación.',
+        'mensaje' => '¡Tutoría solicitada exitosamente! Se notificó por correo y quedó pendiente de aprobación.',
         'sesion_id' => $sesion_id
     ]);
 } catch (Exception $e) {

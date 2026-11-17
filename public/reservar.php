@@ -8,6 +8,7 @@
  */
 
 require_once dirname(__DIR__) . '/includes/auth.php';
+require_once dirname(__DIR__) . '/includes/mailer.php';
 
 // Solo estudiantes pueden agendar tutorías
 requiere_rol('estudiante');
@@ -90,8 +91,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  VALUES (?, ?, ?, ?, ?, ?, ?, 'pendiente', NOW())"
             );
             $stmt_ins->execute([$estudiante_id, $tutor_id, $materia_id, $fecha, $hora_inicio, $hora_fin, $modalidad]);
+            $nueva_sesion_id = (int)$pdo->lastInsertId();
 
-            set_flash('success', '¡Tutoría agendada exitosamente! El tutor ha recibido tu solicitud en su panel.');
+            notificar_reserva_creada($pdo, $nueva_sesion_id);
+
+            set_flash('success', '¡Tutoría agendada exitosamente! El tutor ha recibido tu solicitud en su panel y enviamos la notificación por correo.');
             header('Location: ' . APP_URL . '/panel_estudiante.php');
             exit;
         } catch (Exception $e) {
