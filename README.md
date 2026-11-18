@@ -10,6 +10,8 @@ Plataforma web completa para conectar estudiantes de todos los niveles educativo
 
 Desarrollada en **PHP 7.4 puro (PDO)**, **MySQL 5.7 (InnoDB con utf8mb4)**, **Bootstrap 5.3** y reactividad frontend con **Vue 3 por CDN** (sin necesidad de Node.js, Webpack ni herramientas de compilación).
 
+🌐 **Demo en Vivo (Despliegue en la Nube):** [https://tutoreson-line.site.je](https://tutoreson-line.site.je)
+
 ---
 
 ## 🚀 Características Principales

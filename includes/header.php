@@ -14,6 +14,12 @@ require_once __DIR__ . '/conexion.php';
 // Iniciar sesión segura automáticamente
 iniciar_sesion_segura();
 
+// Interceptar peticiones del Asistente IA en la misma ruta actual (evita bloqueos 403 de ModSecurity en InfinityFree sobre rutas /api/chat_*)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_asistente_ia'])) {
+    require_once dirname(__DIR__) . '/api/chat_ia.php';
+    exit;
+}
+
 // Si existe auth.php y no hay sesión activa, intentar restaurar sesión persistente ("Recordarme")
 if (file_exists(__DIR__ . '/auth.php')) {
     require_once __DIR__ . '/auth.php';
@@ -72,7 +78,7 @@ $rol_usuario = $_SESSION['rol'] ?? '';
                 </li>
                 <?php if ($usuario_autenticado): ?>
                     <li class="nav-item">
-                        <a class="nav-link <?= $pagina_actual === 'chat.php' ? 'active fw-semibold text-primary' : '' ?>" href="<?= APP_URL ?>/chat.php">
+                        <a class="nav-link <?= ($pagina_actual === 'mensajes.php' || $pagina_actual === 'chat.php') ? 'active fw-semibold text-primary' : '' ?>" href="<?= APP_URL ?>/mensajes.php">
                             <i class="bi bi-chat-dots me-1"></i> Mensajes
                         </a>
                     </li>
@@ -102,7 +108,7 @@ $rol_usuario = $_SESSION['rol'] ?? '';
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item <?= $pagina_actual === 'chat.php' ? 'active fw-semibold' : '' ?>" href="<?= APP_URL ?>/chat.php">
+                                <a class="dropdown-item <?= ($pagina_actual === 'mensajes.php' || $pagina_actual === 'chat.php') ? 'active fw-semibold' : '' ?>" href="<?= APP_URL ?>/mensajes.php">
                                     <i class="bi bi-chat-dots me-2"></i> Mis Mensajes
                                 </a>
                             </li>

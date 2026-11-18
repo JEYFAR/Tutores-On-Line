@@ -123,6 +123,30 @@ function iniciar_sesion_segura()
             $_SESSION['creado_en_sesion'] = time();
         }
     }
+
+    // Interceptor de endpoints internos para evitar bloqueos 403 de ModSecurity en InfinityFree sobre URLs con "/api/chat_*"
+    static $endpoint_interceptado = false;
+    if (!$endpoint_interceptado) {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['accion_asistente_ia'])) {
+            $endpoint_interceptado = true;
+            require_once dirname(__DIR__) . '/api/chat_ia.php';
+            exit;
+        }
+        if (!empty($_REQUEST['accion_mensajeria'])) {
+            $endpoint_interceptado = true;
+            $acc_msg = $_REQUEST['accion_mensajeria'];
+            if ($acc_msg === 'conversaciones') {
+                require_once dirname(__DIR__) . '/api/chat_conversaciones.php';
+                exit;
+            } elseif ($acc_msg === 'mensajes') {
+                require_once dirname(__DIR__) . '/api/chat_mensajes.php';
+                exit;
+            } elseif ($acc_msg === 'enviar') {
+                require_once dirname(__DIR__) . '/api/chat_enviar.php';
+                exit;
+            }
+        }
+    }
 }
 
 /**

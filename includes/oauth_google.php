@@ -31,6 +31,21 @@ function google_oauth_configurado()
 }
 
 /**
+ * Obtiene el redirect_uri de Google OAuth adaptándose automáticamente si está en localhost o en hosting externo (InfinityFree)
+ *
+ * @return string
+ */
+function obtener_google_redirect_uri()
+{
+    $uri = env('GOOGLE_REDIRECT_URI', APP_URL . '/oauth_callback.php');
+    $host_actual = $_SERVER['HTTP_HOST'] ?? '';
+    if ($host_actual !== '' && strpos($uri, 'localhost') !== false && strpos($host_actual, 'localhost') === false && strpos($host_actual, '127.0.0.1') === false) {
+        return APP_URL . '/oauth_callback.php';
+    }
+    return $uri;
+}
+
+/**
  * Genera la URL de autorización para redirigir al usuario al consentimiento de Google
  *
  * @param string $rol_deseado 'estudiante' o 'tutor'
@@ -47,7 +62,7 @@ function obtener_url_autorizacion_google($rol_deseado = 'estudiante')
 
     $params = [
         'client_id'             => env('GOOGLE_CLIENT_ID'),
-        'redirect_uri'          => env('GOOGLE_REDIRECT_URI', APP_URL . '/oauth_callback.php'),
+        'redirect_uri'          => obtener_google_redirect_uri(),
         'response_type'         => 'code',
         'scope'                 => 'openid email profile',
         'state'                 => $state,
@@ -185,7 +200,7 @@ function intercambiar_codigo_por_token($code)
         'code'          => $code,
         'client_id'     => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect_uri'  => env('GOOGLE_REDIRECT_URI', APP_URL . '/oauth_callback.php'),
+        'redirect_uri'  => obtener_google_redirect_uri(),
         'grant_type'    => 'authorization_code'
     ];
 

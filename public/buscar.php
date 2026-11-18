@@ -204,7 +204,7 @@ createApp({
                 if (this.filtros.modalidad) params.append("modalidad", this.filtros.modalidad);
                 if (ciu) params.append("ciudad", ciu);
 
-                const res = await fetch("' . APP_URL . '/api/buscar_tutores.php?" + params.toString());
+                const res = await fetch("api/buscar_tutores.php?" + params.toString());
                 if (!res.ok) {
                     throw new Error("Respuesta inválida del servidor: " + res.status);
                 }

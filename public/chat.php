@@ -275,7 +275,7 @@ createApp({
         const cargarConversaciones = async () => {
             cargandoConversaciones.value = true;
             try {
-                const resp = await fetch('<?= APP_URL ?>/api/chat_conversaciones.php');
+                const resp = await fetch('panel.php?accion_mensajeria=conversaciones');
                 const data = await resp.json();
                 if (data.exito) {
                     conversaciones.value = data.conversaciones;
@@ -301,10 +301,12 @@ createApp({
         // Iniciar conversación cuando viene con ?con=ID
         const iniciarChatConContacto = async (contactoId) => {
             try {
-                const resp = await fetch('<?= APP_URL ?>/api/chat_conversaciones.php', {
+                const form = new URLSearchParams();
+                form.append('accion_mensajeria', 'conversaciones');
+                form.append('contacto_id', String(contactoId));
+                const resp = await fetch('panel.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contacto_id: contactoId })
+                    body: form
                 });
                 const data = await resp.json();
                 if (data.exito) {
@@ -342,7 +344,7 @@ createApp({
             if (!conversacionActiva.value) return;
             cargandoMensajes.value = true;
             try {
-                const resp = await fetch(`<?= APP_URL ?>/api/chat_mensajes.php?conversacion_id=${conversacionActiva.value.conversacion_id}&desde_id=0`);
+                const resp = await fetch(`panel.php?accion_mensajeria=mensajes&conversacion_id=${conversacionActiva.value.conversacion_id}&desde_id=0`);
                 const data = await resp.json();
                 if (data.exito) {
                     mensajes.value = data.mensajes;
@@ -361,7 +363,7 @@ createApp({
 
             const ultimoId = mensajes.value.length > 0 ? mensajes.value[mensajes.value.length - 1].id : 0;
             try {
-                const resp = await fetch(`<?= APP_URL ?>/api/chat_mensajes.php?conversacion_id=${conversacionActiva.value.conversacion_id}&desde_id=${ultimoId}`);
+                const resp = await fetch(`panel.php?accion_mensajeria=mensajes&conversacion_id=${conversacionActiva.value.conversacion_id}&desde_id=${ultimoId}`);
                 const data = await resp.json();
                 if (data.exito && data.mensajes.length > 0) {
                     mensajes.value.push(...data.mensajes);
@@ -379,14 +381,15 @@ createApp({
 
             enviando.value = true;
             try {
-                const resp = await fetch('<?= APP_URL ?>/api/chat_enviar.php', {
+                const form = new URLSearchParams();
+                form.append('accion_mensajeria', 'enviar');
+                form.append('conversacion_id', String(conversacionActiva.value.conversacion_id));
+                form.append('texto', txt);
+                form.append('csrf_token', csrfToken);
+
+                const resp = await fetch('panel.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        conversacion_id: conversacionActiva.value.conversacion_id,
-                        texto: txt,
-                        csrf_token: csrfToken
-                    })
+                    body: form
                 });
 
                 const data = await resp.json();

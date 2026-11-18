@@ -234,19 +234,24 @@
             box.scrollTop = box.scrollHeight;
 
             try {
-                const resp = await fetch('<?= APP_URL ?>/api/chat_ia.php', {
+                const formBody = new URLSearchParams();
+                formBody.append('accion_asistente_ia', '1');
+                formBody.append('csrf_token', '<?= htmlspecialchars($chat_ia_csrf, ENT_QUOTES, 'UTF-8') ?>');
+                formBody.append('mensaje', texto);
+                formBody.append('historial', JSON.stringify(historialPrevio));
+
+                const resp = await fetch('panel.php', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '<?= htmlspecialchars($chat_ia_csrf, ENT_QUOTES, 'UTF-8') ?>'
-                    },
-                    body: JSON.stringify({
-                        csrf_token: '<?= htmlspecialchars($chat_ia_csrf, ENT_QUOTES, 'UTF-8') ?>',
-                        mensaje: texto,
-                        historial: historialPrevio
-                    })
+                    body: formBody,
+                    credentials: 'same-origin'
                 });
-                const data = await resp.json();
+                const textoRaw = await resp.text();
+                let data = null;
+                try {
+                    data = JSON.parse(textoRaw);
+                } catch (eJson) {
+                    throw new Error('Error al procesar respuesta del servidor.');
+                }
                 const cargandoEl = document.getElementById('iaCargandoBurbuja');
                 if (cargandoEl) cargandoEl.remove();
 
@@ -254,13 +259,15 @@
                     ? data.respuesta
                     : (data && data.mensaje ? data.mensaje : 'No pude responder en este momento. Intenta nuevamente.');
 
-                historial.push({ rol: 'assistant', texto: reply });
-                guardarHistorial();
+                if (resp.ok && data && data.exito) {
+                    historial.push({ rol: 'assistant', texto: reply });
+                    guardarHistorial();
+                }
                 box.appendChild(crearBurbuja('assistant', reply, false));
             } catch (err) {
                 const cargandoEl = document.getElementById('iaCargandoBurbuja');
                 if (cargandoEl) cargandoEl.remove();
-                const msgErr = 'Ocurrió un inconveniente al enviar tu mensaje. Por favor intenta de nuevo.';
+                const msgErr = (err && err.message) ? err.message : 'Ocurrió un inconveniente al enviar tu mensaje. Por favor intenta de nuevo.';
                 box.appendChild(crearBurbuja('assistant', msgErr, false));
             } finally {
                 enviando = false;

@@ -94,7 +94,18 @@ function env($clave, $por_defecto = null)
 date_default_timezone_set('America/Bogota');
 
 // URL base de la aplicación (sin barra al final)
+// Si se despliega en un dominio externo (ej. InfinityFree) y APP_URL sigue en localhost, se autodetecta automáticamente
 $app_url = env('APP_URL', 'http://localhost/tutoresonline/public');
+$host_actual = $_SERVER['HTTP_HOST'] ?? '';
+if ($host_actual !== '' && strpos($app_url, 'localhost') !== false && strpos($host_actual, 'localhost') === false && strpos($host_actual, '127.0.0.1') === false) {
+    $es_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https')
+        || ((int)($_SERVER['SERVER_PORT'] ?? 80) === 443);
+    $script_name = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+    $pos_pub = strpos($script_name, '/public/');
+    $ruta_public = ($pos_pub !== false) ? substr($script_name, 0, $pos_pub + 7) : '/public';
+    $app_url = ($es_https ? 'https://' : 'http://') . $host_actual . $ruta_public;
+}
 define('APP_URL', rtrim($app_url, '/'));
 
 // URL base del proyecto y de la API

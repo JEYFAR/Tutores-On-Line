@@ -9,6 +9,7 @@
  * =============================================================================
  */
 
+ob_start();
 header('Content-Type: application/json; charset=UTF-8');
 require_once dirname(__DIR__) . '/config/config.php';
 require_once dirname(__DIR__) . '/includes/conexion.php';
@@ -363,7 +364,11 @@ if ($mensaje === '') {
 }
 
 $mensaje = function_exists('mb_substr') ? mb_substr($mensaje, 0, 2000, 'UTF-8') : substr($mensaje, 0, 2000);
-$historial = isset($input['historial']) && is_array($input['historial']) ? $input['historial'] : [];
+$historial_raw = $input['historial'] ?? [];
+if (is_string($historial_raw)) {
+    $historial_raw = json_decode($historial_raw, true);
+}
+$historial = is_array($historial_raw) ? $historial_raw : [];
 
 $nombre_sesion = trim((string)($_SESSION['nombre'] ?? ''));
 $rol_sesion    = trim((string)($_SESSION['rol'] ?? 'estudiante'));
@@ -394,6 +399,10 @@ foreach ($ultimos as $item) {
 $mensajes_api[] = ['role' => 'user', 'content' => $mensaje];
 
 $resultado = consultar_openrouter($mensajes_api);
+
+if (ob_get_length()) {
+    ob_clean();
+}
 
 if (!$resultado['exito'] || $resultado['respuesta'] === null) {
     http_response_code(502);
